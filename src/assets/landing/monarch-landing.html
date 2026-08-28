@@ -188,7 +188,7 @@
   .card .tag{display:inline-block;margin-top:16px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted-2);text-transform:uppercase}
 
   /* network / migration (wash band) */
-  .net-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:56px;align-items:center}
+  .net-grid{display:grid;grid-template-columns:.86fr 1.14fr;gap:56px;align-items:center}
   .map-wrap{position:relative;border:1px solid var(--line);border-radius:var(--radius-lg);padding:8px;background:linear-gradient(160deg,#fff,var(--wash-2));overflow:hidden;box-shadow:var(--shadow-sm)}
   .map-wrap svg{display:block;width:100%;height:auto}
   .net-feats{display:flex;flex-direction:column;gap:6px;margin-top:26px}
@@ -327,17 +327,21 @@
 
   .globe-col{position:relative}
   .globe-stage{position:relative;width:100%;height:600px;isolation:isolate}
-  .globe-stage::before{content:"";position:absolute;inset:4% 8%;border-radius:50%;background:radial-gradient(circle at 50% 42%,rgba(46,107,230,.24),rgba(46,107,230,0) 68%);filter:blur(46px);z-index:0;pointer-events:none}
+  .globe-stage::after{content:"";position:absolute;left:50%;top:46%;width:74%;height:74%;transform:translate(-50%,-50%);border-radius:50%;box-shadow:0 40px 80px -34px rgba(12,30,69,.28);z-index:0;pointer-events:none}
   .globe-stage canvas{position:relative;z-index:1;display:block;width:100%;height:100%;cursor:grab;touch-action:pan-y}
   .globe-stage canvas.grabbing{cursor:grabbing}
-  .globe-note{display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted-2);margin-top:14px}
+  .globe-note{display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--mono);font-size:10.5px;color:var(--muted-2);opacity:.8;margin-top:14px}
+  .globe-note .gn-desktop{display:inline}
+  .globe-note .gn-mobile{display:none}
+  @media(max-width:560px){ .globe-note .gn-desktop{display:none} .globe-note .gn-mobile{display:inline} }
 
-  .globe-float{position:absolute;z-index:8;display:flex;align-items:center;gap:11px;padding:13px 15px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);max-width:196px}
-  .globe-float .gf-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none}
+  .globe-float{position:absolute;z-index:8;display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-sm);max-width:178px}
+  .globe-float .gf-ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex:none}
+  .globe-float .gf-ico svg{width:16px;height:16px}
   .globe-float .gf-txt{display:flex;flex-direction:column}
   .globe-float .gf-k{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
-  .globe-float .gf-v{font-family:var(--display);font-weight:700;font-size:14.5px;color:var(--ink);line-height:1.25;margin-top:1px}
-  .globe-float .gf-s{font-size:11px;color:var(--muted);margin-top:1px}
+  .globe-float .gf-v{font-family:var(--display);font-weight:700;font-size:13.5px;color:var(--ink);line-height:1.25;margin-top:1px}
+  .globe-float .gf-s{font-size:10.5px;color:var(--muted);margin-top:1px}
   .globe-float.gf-1{top:0;right:0}
   .globe-float.gf-2{top:44%;right:-3%;transform:translateY(-50%)}
   .globe-float.gf-3{bottom:2%;right:6%}
@@ -352,9 +356,11 @@
   .gl-bar i{position:absolute;top:0;left:0;height:100%;width:38%;border-radius:3px;background:linear-gradient(90deg,var(--azure),var(--amber-soft));animation:load 1.1s var(--ease) infinite}
   @keyframes load{0%{transform:translateX(-140%)}100%{transform:translateX(360%)}}
 
-  .globe-hint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:rgba(233,240,255,.72);background:rgba(10,24,54,.55);border:1px solid rgba(174,204,255,.18);padding:7px 14px;border-radius:100px;backdrop-filter:blur(6px);transition:opacity .5s;z-index:4;pointer-events:none;display:flex;align-items:center;gap:8px;white-space:nowrap}
-  .globe-hint::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--amber-soft);animation:pulse2 1.4s infinite}
+  .globe-hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:rgba(233,240,255,.62);background:rgba(10,24,54,.42);border:1px solid rgba(174,204,255,.14);padding:6px 13px;border-radius:100px;backdrop-filter:blur(6px);transition:opacity .5s;z-index:4;pointer-events:none;display:flex;align-items:center;gap:7px;white-space:nowrap}
+  .globe-hint::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--amber-soft);animation:pulse2 1.4s infinite}
   .globe-hint.hide{opacity:0}
+  .globe-hint .gh-mobile{display:none}
+  @media(max-width:560px){ .globe-hint .gh-desktop{display:none} .globe-hint .gh-mobile{display:inline} }
 
   .globe-tip{position:absolute;top:0;left:0;padding:6px 11px;border-radius:9px;background:rgba(10,24,54,.94);border:1px solid rgba(174,204,255,.22);color:#fff;font-size:12.5px;pointer-events:none;opacity:0;transform:translate(-50%,-145%);transition:opacity .16s;z-index:6;white-space:nowrap}
   .globe-tip.show{opacity:1}
@@ -564,7 +570,7 @@
       <ul class="reach-legend" aria-hidden="true">
         <li>
           <span class="lg-ico origin"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg></span>
-          <span class="lg-txt"><b>India Hub</b><span>Multiple gateways</span></span>
+          <span class="lg-txt"><b>Origin</b><span>India hub</span></span>
         </li>
         <li>
           <span class="lg-ico dest"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg></span>
@@ -585,7 +591,7 @@
           <div class="gl-brand">MONARCH<span>WORLDWIDE EXPRESS</span></div>
           <div class="gl-bar"><i></i></div>
         </div>
-        <div class="globe-hint" id="globeHint">Drag to rotate · scroll to zoom</div>
+        <div class="globe-hint" id="globeHint"><span class="gh-desktop">Drag to explore · click a destination</span><span class="gh-mobile">Tap a destination to explore</span></div>
         <div class="globe-tip" id="globeTip"></div>
         <div class="globe-panel" id="globePanel" role="dialog" aria-label="Destination details"></div>
         <div class="globe-fallback" id="globeFallback">
@@ -601,13 +607,14 @@
           <span class="gf-txt"><span class="gf-k">Fast Delivery</span><span class="gf-v">Door-to-Door</span><span class="gf-s">Reliable &amp; Secure</span></span>
         </div>
         <div class="globe-float gf-3">
-          <span class="gf-ico" style="background:#E9F8EF;color:#1E9E5A"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7zM9 12l2 2 4-4"/></svg></span>
-          <span class="gf-txt"><span class="gf-k">Trusted Service</span><span class="gf-v">On-time</span><span class="gf-s">Every Time</span></span>
+          <span class="gf-ico" style="background:#E9F8EF;color:#1E9E5A"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.4"/><path d="M12 3v2.4M12 18.6V21M3 12h2.4M18.6 12H21"/></svg></span>
+          <span class="gf-txt"><span class="gf-k">Live Tracking</span><span class="gf-v">Shipment Visibility</span><span class="gf-s">Track Every Step</span></span>
         </div>
       </div>
       <div class="globe-note">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px;margin-right:5px"><rect x="6" y="2" width="12" height="20" rx="6"/><path d="M12 6v4"/></svg>
-        Drag to rotate · Scroll to zoom · Click on a destination
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px;margin-right:5px"><rect x="6" y="2" width="12" height="20" rx="6"/><path d="M12 6v4"/></svg>
+        <span class="gn-desktop">Drag to explore · Click a destination</span>
+        <span class="gn-mobile">Tap a destination to explore</span>
       </div>
     </div>
   </div>
@@ -931,6 +938,7 @@
 
   var scene, camera, renderer, globe, raycaster, mouseNDC, markerMeshes=[], travelers=[], routeLines=[], destLabels=[], started=false, ready=false;
   var W=1,H=1, isMobile = window.innerWidth<=560;
+  var GLOBE_SCALE=0.9; // ~10% smaller than the original full-bleed globe
 
   function makeDotTexture(){
     var s=64, cv=document.createElement('canvas'); cv.width=cv.height=s;
@@ -959,8 +967,8 @@
   }
   var PLANETEX = makePlaneTexture();
 
-  function makeDestLabel(name,sub){
-    var pad=14, fsMain=32, fsSub=21;
+  function makeDestLabel(name,sub,isOrigin){
+    var pad=14, fsMain=34, fsSub=21;
     var cv=document.createElement('canvas'); var g=cv.getContext('2d');
     g.font='700 '+fsMain+'px "Space Grotesk", sans-serif';
     var w1=g.measureText(name).width;
@@ -969,14 +977,14 @@
     var w=Math.max(w1,w2)+pad*2, h=fsMain+fsSub+pad*1.7;
     cv.width=w; cv.height=h; g=cv.getContext('2d');
     g.textBaseline='top';
-    g.shadowColor='rgba(0,0,0,.55)'; g.shadowBlur=8;
+    g.shadowColor='rgba(0,0,0,.5)'; g.shadowBlur=5;
     g.font='700 '+fsMain+'px "Space Grotesk", sans-serif';
-    g.fillStyle='#EAF0FF'; g.fillText(name,pad,2);
+    g.fillStyle=isOrigin?'#F0A93B':'#EAF0FF'; g.fillText(name,pad,2);
     g.font='500 '+fsSub+'px "Inter", sans-serif';
-    g.fillStyle='rgba(174,204,255,.82)'; g.fillText(sub,pad,fsMain+6);
+    g.fillStyle=isOrigin?'rgba(240,169,59,.85)':'rgba(174,204,255,.88)'; g.fillText(sub,pad,fsMain+6);
     var tex=new THREE.CanvasTexture(cv); tex.anisotropy=2;
-    var mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false,depthWrite:false,opacity:0.9});
-    var sp=new THREE.Sprite(mat); var scale=0.1; sp.scale.set(scale*cv.width/cv.height,scale,1);
+    var mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false,depthWrite:false,opacity:0.92});
+    var sp=new THREE.Sprite(mat); var scale=isOrigin?0.115:0.1; sp.scale.set(scale*cv.width/cv.height,scale,1);
     sp.renderOrder=9; return sp;
   }
 
@@ -1012,11 +1020,11 @@
     // atmosphere (subtle fresnel)
     var atmMat=new THREE.ShaderMaterial({
       transparent:true,blending:THREE.AdditiveBlending,side:THREE.BackSide,depthWrite:false,
-      uniforms:{c:{value:new THREE.Color(0x4E8CFF)}},
+      uniforms:{c:{value:new THREE.Color(0x3E7BE0)}},
       vertexShader:'varying vec3 vN; void main(){ vN=normalize(normalMatrix*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-      fragmentShader:'varying vec3 vN; uniform vec3 c; void main(){ float in_=pow(0.62-dot(vN,vec3(0.,0.,1.)),2.2); in_=clamp(in_,0.0,1.0); gl_FragColor=vec4(c,in_*0.9);}'
+      fragmentShader:'varying vec3 vN; uniform vec3 c; void main(){ float in_=pow(0.72-dot(vN,vec3(0.,0.,1.)),3.4); in_=clamp(in_,0.0,1.0); gl_FragColor=vec4(c,in_*0.45);}'
     });
-    scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.16,48,48),atmMat));
+    scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.07,48,48),atmMat));
 
     // routes
     DEST.forEach(function(d,i){ buildRoute(ORIGIN,d,i); });
@@ -1037,7 +1045,7 @@
     var o=ll2v(ORIGIN.lat,ORIGIN.lng,1);
     rot.y=tRot.y=-Math.atan2(o.x,o.z);
     rot.x=tRot.x=0.28;
-    globe.scale.setScalar(reduce?1:0.9);
+    globe.scale.setScalar(reduce?GLOBE_SCALE:GLOBE_SCALE*0.9);
 
     raycaster=new THREE.Raycaster(); mouseNDC=new THREE.Vector2(-2,-2);
     bindEvents();
@@ -1059,14 +1067,24 @@
     return new THREE.Line(g,mat);
   }
 
-  // simplified India border outline, traced clockwise from Kashmir down the
-  // west coast, around the southern tip, up the east coast and the north-east
-  // states, back along the Himalayan border
-  var INDIA_BORDER=[[34.5,76.0],[32.0,74.8],[29.5,71.5],[24.5,68.5],[22.5,69.5],[20.0,71.0],
-    [19.0,72.8],[16.5,73.3],[13.0,74.8],[10.0,76.3],[8.1,77.5],[9.5,79.0],[11.0,79.8],
-    [13.1,80.3],[16.0,81.8],[17.7,83.3],[19.8,85.8],[21.6,87.5],[22.6,88.4],[24.9,89.4],
-    [26.2,91.7],[27.5,93.5],[28.5,97.0],[25.5,94.0],[24.0,92.5],[23.5,91.0],[26.5,88.5],
-    [27.5,88.0],[28.5,81.0],[30.5,79.0],[32.5,78.0]];
+  // India border outline, traced clockwise as a single continuous silhouette:
+  // Kashmir → Pakistan/Rajasthan border → Kutch & Saurashtra → west coast →
+  // Kanyakumari → east coast & deltas → Bengal → around the Bangladesh notch →
+  // Meghalaya, the Tripura finger and the NE states → back along the Himalaya
+  var INDIA_BORDER=[
+    [34.5,76.0],[34.6,74.2],[33.2,74.3],[32.5,74.8],[31.0,74.5],[29.9,73.9],
+    [28.2,71.8],[27.0,70.5],[25.2,70.2],[24.4,70.9],[24.2,68.9],
+    [23.4,68.4],[22.7,69.2],[22.5,70.0],[22.4,70.8],[21.5,70.0],[20.9,70.5],
+    [20.8,71.8],[20.9,72.8],[19.9,72.8],
+    [19.1,72.8],[17.5,73.2],[15.7,73.7],[13.9,74.5],[12.8,74.8],[11.2,75.7],
+    [9.8,76.3],[8.4,77.0],[8.1,77.6],
+    [9.3,79.3],[10.8,79.8],[12.5,80.2],[13.9,80.3],[15.7,80.2],[16.5,81.8],
+    [17.8,83.4],[19.4,85.0],[20.3,86.6],[21.5,87.2],[21.7,88.2],
+    [22.8,88.3],[24.2,88.7],[25.4,88.6],[26.0,89.9],[25.8,91.5],[25.2,92.4],
+    [24.2,92.0],[23.3,91.3],[22.4,91.7],[23.3,93.2],[24.7,94.3],[26.5,95.4],
+    [27.8,96.5],[28.5,97.1],[27.9,96.0],[27.7,93.5],[27.9,91.5],[28.0,89.5],
+    [27.9,88.4],[29.6,81.5],[30.3,80.2],[31.0,79.2],[31.6,78.5],[32.6,79.0],
+    [33.7,78.5],[34.3,78.0],[34.9,76.5]];
   function indiaOutline(){
     var pts=INDIA_BORDER.map(function(c){ return ll2v(c[0],c[1],R*1.006); });
     pts.push(pts[0]);
@@ -1077,20 +1095,20 @@
 
   function marker(d,isHub){
     var col=isHub?0xF0A93B:0x6BA4FF;
-    var m=new THREE.Mesh(new THREE.SphereGeometry(isHub?0.028:0.016,16,16),
+    var m=new THREE.Mesh(new THREE.SphereGeometry(isHub?0.022:0.016,16,16),
       new THREE.MeshBasicMaterial({color:col}));
     m.position.copy(ll2v(d.lat,d.lng,R*1.01));
-    m.userData={d:d,isHub:isHub,base:isHub?0.028:0.016};
+    m.userData={d:d,isHub:isHub,base:isHub?0.022:0.016};
     if(!isHub) markerMeshes.push(m);
     // small glow halo
-    var halo=new THREE.Sprite(new THREE.SpriteMaterial({map:DOTTEX,color:col,transparent:true,opacity:isHub?0.85:0.6,depthWrite:false,blending:THREE.AdditiveBlending}));
-    halo.scale.setScalar(isHub?0.13:0.075); m.add(halo);
+    var halo=new THREE.Sprite(new THREE.SpriteMaterial({map:DOTTEX,color:col,transparent:true,opacity:isHub?0.6:0.55,depthWrite:false,blending:THREE.AdditiveBlending}));
+    halo.scale.setScalar(isHub?0.058:0.05); m.add(halo);
     return m;
   }
 
   function pulseRing(d){
-    var g=new THREE.RingGeometry(0.03,0.045,32);
-    var m=new THREE.MeshBasicMaterial({color:0xF0A93B,transparent:true,opacity:0.6,side:THREE.DoubleSide,depthWrite:false});
+    var g=new THREE.RingGeometry(0.024,0.032,32);
+    var m=new THREE.MeshBasicMaterial({color:0xF0A93B,transparent:true,opacity:0.5,side:THREE.DoubleSide,depthWrite:false});
     var mesh=new THREE.Mesh(g,m);
     var p=ll2v(d.lat,d.lng,R*1.012); mesh.position.copy(p); mesh.lookAt(p.clone().multiplyScalar(2));
     return mesh;
@@ -1224,8 +1242,10 @@
 
   // ---- loop ----
   var clock = (typeof performance!=='undefined')?performance:{now:function(){return Date.now();}};
+  var offscreen=false;
   function animate(){
     requestAnimationFrame(animate);
+    if(offscreen) return; // pause expensive work while the section is scrolled out of view
     var now=clock.now();
 
     // resume auto rotation
@@ -1238,7 +1258,7 @@
     globe.rotation.x=rot.x; globe.rotation.y=rot.y;
 
     // entrance scale
-    if(entranceT<1){ entranceT=Math.min(1,entranceT+0.03); var s=0.9+0.1*ease(entranceT); globe.scale.setScalar(s); }
+    if(entranceT<1){ entranceT=Math.min(1,entranceT+0.03); var s=GLOBE_SCALE*(0.9+0.1*ease(entranceT)); globe.scale.setScalar(s); }
 
     // routes draw-in
     for(var i=0;i<routeLines.length;i++){ var L=routeLines[i];
@@ -1246,7 +1266,7 @@
     }
 
     // pulse ring
-    if(originRing){ var k=(now%1800)/1800; originRing.scale.setScalar(1+k*1.6); originRing.material.opacity=0.6*(1-k); }
+    if(originRing){ var k=(now%2000)/2000; originRing.scale.setScalar(1+k*1.0); originRing.material.opacity=0.45*(1-k); }
 
     // travelers — plane icons flying along each route, nose pointing along travel heading
     if(!reduce){
@@ -1259,7 +1279,9 @@
         if(tv.visible && idx!==nidx){
           var s1=p.clone().applyMatrix4(globe.matrixWorld).project(camera);
           var s2=p2.clone().applyMatrix4(globe.matrixWorld).project(camera);
-          var dx=(s2.x-s1.x)*W, dy=-(s2.y-s1.y)*H;
+          // sprite.material.rotation is CCW in a y-up screen frame, so keep NDC y
+          // positive (up) and correct for the stage's aspect ratio in pixels
+          var dx=(s2.x-s1.x)*W, dy=(s2.y-s1.y)*H;
           if(dx||dy) tv.material.rotation=Math.atan2(dy,dx);
         }
       }
@@ -1276,13 +1298,16 @@
   }
   function ease(t){ return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; }
 
-  // ---- start when visible ----
+  // ---- start when visible, and pause/resume the render loop as it scrolls in/out ----
   var io=new IntersectionObserver(function(en){
-    en.forEach(function(x){ if(x.isIntersecting && !started){ started=true; io.disconnect();
-      // ensure fonts before labels; small delay
-      (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(function(){ init(); });
-    }});
-  },{threshold:0.2});
+    en.forEach(function(x){
+      offscreen = !x.isIntersecting;
+      if(x.isIntersecting && !started){ started=true;
+        // ensure fonts before labels; small delay
+        (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(function(){ init(); });
+      }
+    });
+  },{threshold:0.15});
   io.observe(stage);
 })();
 </script>
