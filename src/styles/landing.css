@@ -77,6 +77,10 @@
   .nav-links a{transition:color .2s}
   .nav-links a:hover{color:#fff}
   header.scrolled .nav-links a:hover{color:var(--ink)}
+  .nav-links .nav-login{padding:7px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.32)}
+  .nav-links .nav-login:hover{border-color:#fff;color:#fff}
+  header.scrolled .nav-links .nav-login{border-color:var(--line-2)}
+  header.scrolled .nav-links .nav-login:hover{border-color:var(--azure);color:var(--ink)}
   .nav-cta{display:flex;align-items:center;gap:14px}
   .btn{font-family:var(--display);font-weight:500;font-size:14.5px;padding:11px 20px;border-radius:12px;border:1px solid transparent;cursor:pointer;transition:all .25s var(--ease);white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
   /* .btn.btn-x (not just .btn-x) so these reliably outrank .monarch-landing a{color:inherit} —
@@ -291,6 +295,17 @@
     .values{grid-template-columns:repeat(2,1fr)}
     .foot-grid{grid-template-columns:1fr 1fr;gap:32px}
     .nav-links{display:none}
+    .nav-links.open{
+      display:flex;flex-direction:column;align-items:stretch;gap:2px;
+      position:absolute;top:100%;left:0;right:0;
+      background:rgba(8,18,42,.98);backdrop-filter:blur(14px);
+      padding:10px 28px 22px;border-bottom:1px solid rgba(255,255,255,.1);
+      box-shadow:0 20px 40px -20px rgba(0,0,0,.5)
+    }
+    header.scrolled .nav-links.open{background:rgba(255,255,255,.98)}
+    .nav-links.open a{padding:12px 0;font-size:16px;border-top:1px solid rgba(255,255,255,.08)}
+    header.scrolled .nav-links.open a{border-top-color:var(--line)}
+    .nav-links.open .nav-login{margin-top:8px;text-align:center;border-radius:12px;padding:12px 0}
     .menu-toggle{display:block}
     .purpose{padding:44px 30px}
     .track-sec{padding:38px 24px}
@@ -302,7 +317,8 @@
     .foot-grid{grid-template-columns:1fr}
     .doc-list{grid-template-columns:1fr}
     .hero{padding:130px 0 64px}
-    .nav-cta .btn-ghost{display:none}
+    .nav-cta .btn-ghost:not(.nav-login){display:none}
+    .nav-cta .nav-login{padding:9px 14px;font-size:13px}
     .form{padding:26px 22px}
   }
   @media(prefers-reduced-motion:reduce){

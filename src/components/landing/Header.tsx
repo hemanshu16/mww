@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 const NAV_LINKS = [
@@ -49,12 +50,15 @@ export function Header() {
             <small>WORLDWIDE EXPRESS</small>
           </span>
         </a>
-        <div className="nav-links" style={menuOpen ? { display: 'flex' } : undefined}>
+        <div className={cn('nav-links', menuOpen && 'open')}>
           {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href}>
+            <a key={link.href} href={link.href} onClick={() => setMenuOpen(false)}>
               {link.label}
             </a>
           ))}
+          <Link to="/login" className="nav-login" onClick={() => setMenuOpen(false)}>
+            Client Login
+          </Link>
         </div>
         <div className="nav-cta">
           <a href="#track" className="btn btn-ghost">
