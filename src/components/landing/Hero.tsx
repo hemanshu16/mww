@@ -1,7 +1,11 @@
+import { useRef } from 'react'
 import { Reveal } from './Reveal'
-import { TrackingCard } from './TrackingCard'
+import { CourierPackage3D } from './CourierPackage3D'
+import { AirplaneCursor } from './AirplaneCursor'
 
 export function Hero() {
+  const visualRef = useRef<HTMLDivElement>(null)
+
   return (
     <section className="hero">
       <div className="wrap hero-grid">
@@ -36,8 +40,12 @@ export function Hero() {
           </Reveal>
         </div>
 
-        <Reveal as="div" delay={2} className="track-card" id="demoCard">
-          <TrackingCard />
+        <Reveal as="div" delay={2}>
+          <div className="hero-visual" ref={visualRef}>
+            <CourierPackage3D />
+            <AirplaneCursor areaRef={visualRef} />
+            <span className="hero-visual-hint">Drag to rotate the package</span>
+          </div>
         </Reveal>
       </div>
     </section>
