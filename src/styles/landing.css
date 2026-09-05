@@ -287,7 +287,8 @@
   .docs-panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:16px;margin-bottom:40px}
   .docs-search-wrap{display:flex;align-items:center;gap:10px;padding:11px 16px;border:1px solid var(--line-2);border-radius:12px;background:var(--wash);color:var(--muted-2);margin-bottom:12px;transition:border-color .2s,box-shadow .2s}
   .docs-search-wrap:focus-within{border-color:var(--azure);box-shadow:0 0 0 3px rgba(46,107,230,.14);background:#fff}
-  .docs-search{flex:1;border:none;background:none;outline:none;font-family:var(--body);font-size:14.5px;color:var(--ink)}
+  /* 16px, not 14.5px: anything smaller makes iOS Safari zoom the whole page in on focus. */
+  .docs-search{flex:1;border:none;background:none;outline:none;font-family:var(--body);font-size:16px;color:var(--ink)}
   .docs-search::placeholder{color:var(--muted-2)}
   .docs-cats{display:flex;align-items:center;gap:8px;flex-wrap:wrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .doc-tab{display:inline-flex;align-items:center;gap:7px;flex:none;font-family:var(--display);font-weight:500;font-size:13.5px;padding:9px 15px;border-radius:10px;border:1px solid var(--line-2);color:var(--ink-soft);background:#fff;transition:all .2s;white-space:nowrap}
@@ -452,8 +453,15 @@
     .foot-legal{justify-content:center}
     .docs-popular-grid{grid-template-columns:1fr}
     .docs-cats{flex-wrap:nowrap}
-    .doc-row{flex-wrap:wrap;padding:14px 18px}
-    .doc-row-formats{margin-left:52px}
+    /* Keep icon + name/description + format buttons on one line — main shrinks
+       (flex:1) and formats stays content-sized (flex:none) so there's no gap
+       between them. The old flex-wrap + margin-left:52px assumed formats always
+       dropped to its own line, which left a large empty gap when it didn't and
+       starved the description of width. */
+    .doc-row{padding:14px 18px}
+    .doc-row-main{flex:1 1 auto;min-width:0}
+    .doc-row-formats{flex:0 0 auto;margin-left:0;flex-direction:column;align-items:flex-end}
+    .doc-pop-formats{flex-direction:column;align-items:flex-start}
     .doc-accordion-head{padding:14px 18px}
     .hero .wrap{padding-top:112px}
     .hero-carousel{gap:14px;margin-top:28px}
