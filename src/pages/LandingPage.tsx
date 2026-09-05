@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import '@/styles/landing.css'
 import { Header } from '@/components/landing/Header'
 import { Hero } from '@/components/landing/Hero'
+import { ShipmentJourney } from '@/components/landing/ShipmentJourney'
 import { Marquee } from '@/components/landing/Marquee'
 import { Stats } from '@/components/landing/Stats'
 import { Services } from '@/components/landing/Services'
@@ -46,6 +47,7 @@ function LandingPage() {
       <Header />
       <main id="top">
         <Hero />
+        <ShipmentJourney />
         <Marquee />
         <Stats />
         <TrackSection />
