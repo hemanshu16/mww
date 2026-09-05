@@ -30,7 +30,10 @@ export function Contact() {
             </div>
             <div>
               <div className="k">Visit us</div>
-              <div className="v">Monarch House, Panchnath Plot, Rajkot 360001, Gujarat, India</div>
+              <div className="v">
+                Office No. 13, Umesh Commercial Complex, Nr. Chaudhari High School, Rajkot -
+                360001, Gujarat, India
+              </div>
             </div>
           </div>
           <div className="ci-row">
@@ -41,7 +44,9 @@ export function Contact() {
             </div>
             <div>
               <div className="k">Email</div>
-              <div className="v">sales@monarchworldwide.com</div>
+              <div className="v">
+                <a href="mailto:cs.monarchwwe@gmail.com">cs.monarchwwe@gmail.com</a>
+              </div>
             </div>
           </div>
           <div className="ci-row">
@@ -52,7 +57,10 @@ export function Contact() {
             </div>
             <div>
               <div className="k">Call</div>
-              <div className="v">+91 94280 35838 &nbsp;·&nbsp; +91 98242 13861</div>
+              <div className="v">
+                <a href="tel:+919909497320">+91 99094 97320</a>
+              </div>
+              <div className="v-note">Ridham Akabari</div>
             </div>
           </div>
         </Reveal>

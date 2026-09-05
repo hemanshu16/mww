@@ -1,7 +1,8 @@
 const ITEMS = [
   'DHL Express',
-  'FedEx',
+  'FedEx Express',
   'UPS',
+  'Aramex',
   'Air Freight',
   'Sea Freight',
   'Customs Cleared',
