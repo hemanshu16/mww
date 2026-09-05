@@ -164,9 +164,11 @@
 
 /* ---------- sitewide plane cursor ---------- */
 /* Replaces the system arrow everywhere once JS confirms a fine (mouse) pointer,
-   so touch devices and no-JS fallbacks keep the native cursor. */
+   so touch devices and no-JS fallbacks keep the native cursor. Text-editable
+   elements are excluded so the native caret stays visible while typing —
+   AirplaneCursor.tsx hides the plane glyph over these same elements. */
 html.plane-cursor-active,
-html.plane-cursor-active * {
+html.plane-cursor-active *:not(input):not(textarea):not(select):not([contenteditable='true']) {
   cursor: none !important;
 }
 .airplane-cursor {

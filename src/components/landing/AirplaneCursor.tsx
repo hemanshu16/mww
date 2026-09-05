@@ -20,6 +20,7 @@ export function AirplaneCursor() {
     const root = document.documentElement
 
     let raf = 0
+    let running = false
     let visible = false
     let targetX = 0
     let targetY = 0
@@ -28,6 +29,25 @@ export function AirplaneCursor() {
     let angle = 0
     let hasPosition = false
 
+    function paint() {
+      cursor!.style.transform = `translate(${curX}px, ${curY}px) rotate(${angle}rad)`
+    }
+
+    function startLoop() {
+      if (running) return
+      running = true
+      raf = requestAnimationFrame(tick)
+    }
+
+    // Text-editable targets keep their native caret (see the matching :not()
+    // exclusion in index.css) — hide the plane glyph there instead of
+    // stacking it on top of the caret.
+    function isTextTarget(target: EventTarget | null) {
+      if (!(target instanceof HTMLElement)) return false
+      const tag = target.tagName
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
+    }
+
     function onMove(e: PointerEvent) {
       targetX = e.clientX
       targetY = e.clientY
@@ -35,11 +55,20 @@ export function AirplaneCursor() {
         curX = targetX
         curY = targetY
         hasPosition = true
+        paint()
+      }
+      if (isTextTarget(e.target)) {
+        if (visible) {
+          visible = false
+          cursor!.classList.remove('show')
+        }
+        return
       }
       if (!visible) {
         visible = true
         cursor!.classList.add('show')
       }
+      startLoop()
     }
     function onLeave() {
       visible = false
@@ -50,20 +79,30 @@ export function AirplaneCursor() {
     window.addEventListener('pointermove', onMove)
     document.addEventListener('mouseleave', onLeave)
 
+    // Only spins while catching up to the pointer — settles and stops scheduling
+    // frames the instant it reaches the target, instead of polling at 60fps forever.
     function tick() {
-      raf = requestAnimationFrame(tick)
-      if (!hasPosition) return
       const dx = targetX - curX
       const dy = targetY - curY
+      const dist = Math.hypot(dx, dy)
       const lerp = reduce ? 1 : 0.18
+
+      if (dist < 0.05) {
+        curX = targetX
+        curY = targetY
+        paint()
+        running = false
+        return
+      }
+
       curX += dx * lerp
       curY += dy * lerp
-      if (Math.hypot(dx, dy) > 1.2) {
+      if (dist > 1.2) {
         angle = Math.atan2(dy, dx)
       }
-      cursor!.style.transform = `translate(${curX}px, ${curY}px) rotate(${angle}rad)`
+      paint()
+      raf = requestAnimationFrame(tick)
     }
-    tick()
 
     return () => {
       cancelAnimationFrame(raf)
