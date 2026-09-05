@@ -137,7 +137,6 @@ function frontTexture(logo: HTMLImageElement | null) {
   g.restore()
 
   const tex = new THREE.CanvasTexture(cv)
-  tex.anisotropy = 4
   tex.colorSpace = THREE.SRGBColorSpace
   return tex
 }
@@ -241,6 +240,12 @@ function build(stage: HTMLDivElement, canvas: HTMLCanvasElement, logo: HTMLImage
   const front = frontTexture(logo)
   const side = sideTexture(logo)
   const top = topTexture(logo)
+  // Anisotropic filtering keeps the printed text crisp at the shallow, off-axis
+  // angles the box is usually viewed from, instead of softening into a blur.
+  const maxAniso = renderer.capabilities.getMaxAnisotropy()
+  front.anisotropy = maxAniso
+  side.anisotropy = maxAniso
+  top.anisotropy = maxAniso
   disposables.push(front, side, top)
 
   const cardboardMat = (map: THREE.Texture) =>

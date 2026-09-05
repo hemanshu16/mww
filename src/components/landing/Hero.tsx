@@ -109,9 +109,6 @@ export function Hero() {
             the globe.
           </Reveal>
           <Reveal as="div" delay={3} className="hero-actions">
-            <a href="#contact" className="btn btn-primary">
-              Request a quote →
-            </a>
             <a href="#track" className="btn btn-ghost">
               Track shipment →
             </a>

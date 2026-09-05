@@ -198,12 +198,12 @@
   .journey-visual-hint{position:absolute;left:50%;bottom:-18px;transform:translateX(-50%);font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--muted-2);white-space:nowrap;pointer-events:none}
 
   @media(max-width:960px){
-    .package-stage-wrap{max-width:270px}
+    .package-stage-wrap{max-width:300px}
     .atmo-blob{width:320px;height:320px}
   }
   @media(max-width:560px){
     .journey-sec.sec{padding:32px 0 40px}
-    .package-stage-wrap{max-width:210px}
+    .package-stage-wrap{max-width:270px}
     .journey-visual-hint{display:none}
     .atmo-blob{width:240px;height:240px;filter:blur(60px)}
   }
