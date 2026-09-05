@@ -48,12 +48,12 @@ function LandingPage() {
         <Hero />
         <Marquee />
         <Stats />
+        <TrackSection />
         <Services />
         <Network />
         <Purpose />
         <Values />
         <Documents />
-        <TrackSection />
         <Contact />
       </main>
       <Footer />
