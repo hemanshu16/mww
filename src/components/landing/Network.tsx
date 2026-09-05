@@ -73,8 +73,8 @@ export function Network() {
           <p className="sr-only">
             Monarch Worldwide Express connects shipments from India with international
             destinations through courier and logistics services. Representative global
-            destinations include Dubai, London, New York, Singapore, Toronto, Frankfurt and
-            Sydney.
+            destinations include Dubai, London, New York, Los Angeles, Singapore, Hong Kong,
+            Tokyo, Sydney, Johannesburg and São Paulo.
           </p>
         </Reveal>
 

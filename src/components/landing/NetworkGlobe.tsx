@@ -399,7 +399,12 @@ export function NetworkGlobe({ selectedCountry }: NetworkGlobeProps) {
       ) as THREE.Sprite & { userData: { curve: THREE.CatmullRomCurve3; t: number; speed: number; delay: number } }
       tv.scale.setScalar(0.06)
       tv.renderOrder = 8
-      tv.userData = { curve, t: Math.random(), speed: 0.0016 + Math.random() * 0.0012, delay: i * 0.05 }
+      // Speed scales down with distance (ang, in radians) so a long-haul plane
+      // (e.g. to São Paulo or LA) takes proportionally longer to cross the globe
+      // instead of covering far more ground than a short hop in the same time —
+      // the +0.6 floor keeps very short routes from becoming implausibly fast.
+      const speed = (0.0026 / (0.6 + ang)) * (0.85 + Math.random() * 0.3)
+      tv.userData = { curve, t: Math.random(), speed, delay: i * 0.05 }
       globe.add(tv)
       travelers.push(tv)
     }
