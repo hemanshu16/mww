@@ -25,7 +25,10 @@ export function Header() {
     <header className={cn(scrolled && 'scrolled')}>
       <nav className="nav">
         <a href="#top" className="brand">
-          <img className="mark" src="/logo-mark.png" alt="" />
+          <span className="mark">
+            <img src="/logo-mark-white.png" alt="" className="mark-white" />
+            <img src="/logo-mark.png" alt="" className="mark-color" />
+          </span>
           <span>
             Monarch
             <br />

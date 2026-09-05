@@ -3,8 +3,8 @@ import { useCountUp } from '@/hooks/useCountUp'
 
 export function Stats() {
   const established = useCountUp<HTMLDivElement>(2001, 24)
-  const domesticDays = useCountUp<HTMLSpanElement>(7)
-  const intlDays = useCountUp<HTMLSpanElement>(15)
+  const domesticDays = useCountUp<HTMLSpanElement>(3)
+  const intlDays = useCountUp<HTMLSpanElement>(7)
   const docs = useCountUp<HTMLSpanElement>(20)
 
   return (

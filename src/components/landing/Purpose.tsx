@@ -12,9 +12,9 @@ export function Purpose() {
             with care in every hand-off.
           </blockquote>
           <div className="who">
-            <div className="av">AB</div>
+            <div className="av">RA</div>
             <div>
-              <b>Anand Bosamia</b>
+              <b>Ridham Akabari</b>
               <span>Founder · Monarch Worldwide Express</span>
             </div>
           </div>

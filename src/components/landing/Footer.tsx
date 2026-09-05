@@ -5,7 +5,9 @@ export function Footer() {
         <div className="foot-grid">
           <div className="foot-brand">
             <a href="#top" className="brand">
-              <img className="mark" src="/logo-mark.png" alt="" />
+              <span className="mark">
+                <img src="/logo-mark-white.png" alt="" className="mark-white" />
+              </span>
               <span>
                 Monarch
                 <br />
