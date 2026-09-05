@@ -8,7 +8,6 @@ const HERO_VIDEOS = [
   { id: 'ocean', num: '01', title: 'Ocean Freight' },
   { id: 'air', num: '02', title: 'Air Freight' },
   { id: 'domestic', num: '03', title: 'Domestic Logistics' },
-  { id: 'warehouse', num: '04', title: 'Warehousing & Delivery' },
 ] as const
 
 export function Hero() {

@@ -11,7 +11,6 @@ const SERVICE_LINKS = [
   { label: 'Ocean Freight', href: '#services' },
   { label: 'Air Freight', href: '#services' },
   { label: 'Domestic Logistics', href: '#services' },
-  { label: 'Warehousing & Delivery', href: '#services' },
 ]
 
 const SUPPORT_LINKS = [
