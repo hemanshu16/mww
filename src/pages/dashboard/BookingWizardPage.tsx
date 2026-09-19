@@ -130,10 +130,12 @@ export default function BookingWizardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl tracking-tight">{title}</h1>
-        {booking && (
-          <p className="mt-1 text-sm text-muted-foreground">{booking.bookingNumber}</p>
-        )}
+        <h1 className="text-[26px] font-bold leading-[34px] tracking-[-0.02em] text-foreground">
+          {title}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {booking ? booking.bookingNumber : 'Create a new international shipment in a few steps.'}
+        </p>
       </div>
 
       <Card>

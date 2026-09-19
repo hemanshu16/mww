@@ -92,7 +92,9 @@ export default function BookingDetailPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="font-heading text-2xl tracking-tight">{booking.bookingNumber}</h1>
+            <h1 className="text-[26px] font-bold leading-[34px] tracking-[-0.02em] text-foreground">
+              {booking.bookingNumber}
+            </h1>
             <StatusBadge status={booking.status} />
           </div>
           <p className="mt-1 text-sm text-muted-foreground">

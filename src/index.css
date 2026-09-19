@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
@@ -159,6 +159,109 @@
     box-shadow:
       0 2px 4px hsl(var(--shadow-color) / 0.08),
       0 24px 48px hsl(var(--shadow-color) / 0.16);
+  }
+
+  /* Monarch dashboard elevation — subtle, elevated not floating */
+  .shadow-card {
+    box-shadow:
+      0 1px 2px rgba(16, 24, 40, 0.03),
+      0 4px 16px rgba(16, 24, 40, 0.04);
+  }
+  .shadow-card-hover {
+    box-shadow: 0 4px 20px rgba(16, 24, 40, 0.08);
+  }
+  .shadow-dropdown {
+    box-shadow: 0 10px 30px rgba(16, 24, 40, 0.12);
+  }
+}
+
+/* ============================================================
+   Monarch design system — scoped to the dashboard + auth shell.
+   Redefines the shared shadcn tokens so every primitive inside
+   .monarch-app adopts Monarch's palette. The landing page keeps
+   the :root defaults above.
+   ============================================================ */
+.monarch-app {
+  --radius: 0.75rem;
+
+  --background: #f6f9fd;
+  --foreground: #13294b;
+  --card: #ffffff;
+  --card-foreground: #13294b;
+  --popover: #ffffff;
+  --popover-foreground: #13294b;
+
+  --primary: #2874b2;
+  --primary-foreground: #ffffff;
+  --secondary: #eff6ff;
+  --secondary-foreground: #21649c;
+  --muted: #f1f5f9;
+  --muted-foreground: #526581;
+  --accent: #eff6ff;
+  --accent-foreground: #21649c;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #059669;
+  --success-foreground: #ffffff;
+
+  --border: #e4eaf1;
+  --input: #d5dde8;
+  --ring: #2874b2;
+
+  /* Blue ramp → Monarch primary family */
+  --blue-100: #eff6ff;
+  --blue-200: #dbeafe;
+  --blue-300: #93c5fd;
+  --blue-400: #60a5fa;
+  --blue-500: #2874b2;
+  --blue-600: #21649c;
+  --blue-700: #19527f;
+  --blue-800: #153f61;
+  --blue-900: #102f49;
+
+  /* Cool neutral ramp → slate */
+  --neutral-100: #f8fafc;
+  --neutral-200: #f1f5f9;
+  --neutral-300: #e4eaf1;
+  --neutral-400: #cbd5e1;
+  --neutral-500: #94a3b8;
+  --neutral-600: #64748b;
+  --neutral-700: #526581;
+  --neutral-800: #334155;
+  --neutral-900: #13294b;
+
+  /* Gold ramp → amber (warning / in-transit) */
+  --gold-100: #fffbeb;
+  --gold-200: #fef3c7;
+  --gold-300: #fde68a;
+  --gold-400: #fcd34d;
+  --gold-500: #f59e0b;
+  --gold-600: #d97706;
+  --gold-700: #b45309;
+  --gold-800: #92400e;
+  --gold-900: #78350f;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Inter has no display weight — headings default to Inter 600, but any
+   font-weight utility (font-bold on page titles, etc.) still overrides,
+   because this lives in @layer base while utilities sit above it. */
+@layer base {
+  .monarch-app :is(h1, h2, h3, h4),
+  .monarch-app .font-heading {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .monarch-app :is(input, textarea)::placeholder {
+    color: #9aa8ba;
   }
 }
 

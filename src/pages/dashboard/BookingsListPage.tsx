@@ -7,6 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { StatusBadge } from '@/components/StatusBadge'
 import { RouteCell } from '@/components/booking/RouteCell'
+import { PageHeader } from '@/components/ui/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import { formatDate, formatWeight } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { BOOKING_STATUSES, SHIPMENT_TYPE_LABELS, type BookingStatus } from '@/lib/types'
@@ -47,21 +49,21 @@ export default function BookingsListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-heading text-2xl tracking-tight">Bookings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">All your shipments in one place.</p>
-        </div>
-        <Button asChild>
-          <Link to="/dashboard/bookings/new">
-            <PlusCircle className="size-4" />
-            New booking
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Bookings"
+        description="Manage and track all your shipments."
+        actions={
+          <Button asChild>
+            <Link to="/dashboard/bookings/new">
+              <PlusCircle className="size-4" />
+              New booking
+            </Link>
+          </Button>
+        }
+      />
 
-      {/* Status tabs */}
-      <div className="flex flex-wrap gap-1 rounded-lg bg-muted p-1">
+      {/* Status filter tabs */}
+      <div className="inline-flex flex-wrap gap-1 rounded-[10px] border border-border bg-card p-1">
         {TABS.map((tab) => {
           const active = (tab.value === 'ALL' && !status) || tab.value === status
           return (
@@ -69,8 +71,10 @@ export default function BookingsListPage() {
               key={tab.value}
               onClick={() => setTab(tab.value)}
               className={cn(
-                'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                active ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                'rounded-[8px] px-3 py-1.5 text-sm font-medium transition-colors duration-150',
+                active
+                  ? 'bg-[#eff6ff] text-[#21649c]'
+                  : 'text-muted-foreground hover:bg-[#f8fafc] hover:text-foreground',
               )}
             >
               {tab.label}
@@ -111,15 +115,17 @@ export default function BookingsListPage() {
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={7} className="py-16 text-center">
-                  <PackageOpen className="mx-auto size-10 text-neutral-400" />
-                  <p className="mt-3 font-medium">No bookings yet</p>
-                  <p className="text-sm text-muted-foreground">
-                    Create your first shipment to get started.
-                  </p>
-                  <Button asChild variant="outline" className="mt-4">
-                    <Link to="/dashboard/bookings/new">New booking</Link>
-                  </Button>
+                <TableCell colSpan={7} className="p-0">
+                  <EmptyState
+                    icon={PackageOpen}
+                    title={status ? `No ${status.toLowerCase()} bookings` : 'No bookings yet'}
+                    description="Create your first shipment to start tracking your deliveries."
+                    action={
+                      <Button asChild>
+                        <Link to="/dashboard/bookings/new">New booking</Link>
+                      </Button>
+                    }
+                  />
                 </TableCell>
               </TableRow>
             ) : (

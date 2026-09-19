@@ -10,6 +10,7 @@ import { passwordChecks, passwordSchema } from '@/lib/validation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { cn } from '@/lib/utils'
@@ -233,10 +234,11 @@ export default function ProfilePage() {
   const { profile } = useAuth()
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <h1 className="font-heading text-2xl tracking-tight">Profile</h1>
-        {profile?.isGstBilling && <Badge variant="gold">GST billing</Badge>}
-      </div>
+      <PageHeader
+        title="Profile"
+        description="Manage your account details and security."
+        actions={profile?.isGstBilling ? <Badge variant="booked">GST billing</Badge> : undefined}
+      />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ProfileForm />
         <PasswordForm />
