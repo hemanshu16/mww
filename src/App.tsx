@@ -1,12 +1,11 @@
 import { Outlet } from 'react-router-dom'
-import { AirplaneCursor } from '@/components/landing/AirplaneCursor'
+import { AuthProvider } from '@/components/AuthProvider'
 
 function App() {
   return (
-    <>
-      <AirplaneCursor />
+    <AuthProvider>
       <Outlet />
-    </>
+    </AuthProvider>
   )
 }
 
