@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import '@/styles/landing.css'
-import { AirplaneCursor } from '@/components/landing/AirplaneCursor'
 import { Header } from '@/components/landing/Header'
 import { Hero } from '@/components/landing/Hero'
 import { ShipmentJourney } from '@/components/landing/ShipmentJourney'
