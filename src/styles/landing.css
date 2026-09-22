@@ -507,7 +507,7 @@
      clipped at the edge — .globe-stage's raised z-index lets that overflow
      paint over neighboring content instead of being covered by it. */
   .globe-stage canvas{position:absolute;top:-15%;left:-15%;z-index:1;display:block;width:130%;height:130%;cursor:grab;touch-action:pan-y}
-  .globe-stage canvas.grabbing{cursor:grabbing}
+
   .globe-note{display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--mono);font-size:10.5px;color:var(--muted-2);opacity:.8;margin-top:14px}
   .globe-note .gn-desktop{display:inline}
   .globe-note .gn-mobile{display:none}

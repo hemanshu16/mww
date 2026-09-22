@@ -45,7 +45,6 @@ function LandingPage() {
 
   return (
     <div className="monarch-landing">
-      <AirplaneCursor />
       <Header />
       <main id="top">
         <Hero />
