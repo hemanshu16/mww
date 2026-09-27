@@ -1,9 +1,11 @@
-import type { Step1FormValues, Step2FormValues } from '@/lib/bookingSchemas'
+import type { ItemFormValues, Step1FormValues, Step2FormValues } from '@/lib/bookingSchemas'
 import type {
   Booking,
+  BookingItem,
   ConsigneeInput,
   CreateBookingInput,
   InvoiceInput,
+  ItemInput,
   KycType,
   PackageInput,
   PartiesInput,
@@ -22,7 +24,11 @@ const asKyc = (v?: string): KycType | null => (v ? (v as KycType) : null)
 // --- Step 1 ----------------------------------------------------------------
 export function emptyStep1(): Step1FormValues {
   return {
+    consigneeCountryCode: '',
+    consigneeZipCode: '',
     courierProviderId: '',
+    ratePerKg: null,
+    totalPrice: null,
     shipmentType: 'NON_DOCUMENT',
     shipmentDate: todayInput(),
     referenceNumber: '',
@@ -33,7 +39,11 @@ export function emptyStep1(): Step1FormValues {
 
 export function bookingToStep1(b: Booking): Step1FormValues {
   return {
+    consigneeCountryCode: b.consigneeCountryCode ?? b.consignee?.country ?? '',
+    consigneeZipCode: b.consigneeZipCode ?? '',
     courierProviderId: b.courierProviderId,
+    ratePerKg: b.ratePerKg ?? null,
+    totalPrice: b.totalPrice ?? null,
     shipmentType: b.shipmentType,
     shipmentDate: toDateInput(b.shipmentDate) || todayInput(),
     referenceNumber: b.referenceNumber ?? '',
@@ -71,21 +81,96 @@ export function step1ToCreateInput(values: Step1FormValues): CreateBookingInput 
     shipmentType: values.shipmentType,
     shipmentDate: values.shipmentDate,
     packages: toPackageInputs(values),
+    consigneeCountryCode: values.consigneeCountryCode,
   }
+  if (values.consigneeZipCode) input.consigneeZipCode = values.consigneeZipCode
+  if (values.ratePerKg !== null) input.ratePerKg = values.ratePerKg
+  if (values.totalPrice !== null) input.price = values.totalPrice
   if (values.referenceNumber?.trim()) input.referenceNumber = values.referenceNumber.trim()
   if (values.remarks?.trim()) input.remarks = values.remarks.trim()
   return input
 }
 
-export function step1ToUpdateInput(values: Step1FormValues): UpdateBookingInput {
-  return {
+/**
+ * `items` is passed only when step 1 renumbered or dropped items (a box was
+ * removed); the API needs the updated list in the same request as fewer packages.
+ */
+export function step1ToUpdateInput(
+  values: Step1FormValues,
+  items?: BookingItem[],
+): UpdateBookingInput {
+  const input: UpdateBookingInput = {
     courierProviderId: values.courierProviderId,
     shipmentType: values.shipmentType,
     shipmentDate: values.shipmentDate,
     referenceNumber: nn(values.referenceNumber),
     remarks: nn(values.remarks),
     packages: toPackageInputs(values),
+    consigneeCountryCode: values.consigneeCountryCode,
+    consigneeZipCode: nn(values.consigneeZipCode),
+    ratePerKg: values.ratePerKg,
+    price: values.totalPrice,
   }
+  if (items) input.items = items.map(bookingItemToInput)
+  return input
+}
+
+// --- Items -----------------------------------------------------------------
+export function emptyItem(boxNumber: number): ItemFormValues {
+  return { boxNumber, priority: 'NORMAL', name: '', quantity: '1', price: '', hsnCode: '', weight: '' }
+}
+
+function bookingItemToForm(i: BookingItem): ItemFormValues {
+  return {
+    boxNumber: i.boxNumber,
+    priority: i.priority,
+    name: i.name,
+    quantity: String(i.quantity),
+    price: String(i.price),
+    hsnCode: i.hsnCode,
+    weight: i.weight === null ? '' : String(i.weight),
+  }
+}
+
+function bookingItemToInput(i: BookingItem): ItemInput {
+  const input: ItemInput = {
+    boxNumber: i.boxNumber,
+    priority: i.priority,
+    name: i.name,
+    quantity: i.quantity,
+    price: i.price,
+    hsnCode: i.hsnCode,
+  }
+  if (i.weight !== null) input.weight = i.weight
+  return input
+}
+
+/** Form rows → API items, grouped by box (stable within a box). */
+export function itemsToInput(items: ItemFormValues[]): ItemInput[] {
+  return [...items]
+    .sort((a, b) => a.boxNumber - b.boxNumber)
+    .map((i) => {
+      const input: ItemInput = {
+        boxNumber: i.boxNumber,
+        priority: i.priority,
+        name: i.name.trim(),
+        quantity: Number(i.quantity),
+        price: Number(i.price),
+        hsnCode: i.hsnCode.trim(),
+      }
+      if (i.weight.trim()) input.weight = Number(i.weight)
+      return input
+    })
+}
+
+/**
+ * Removing box `removed` (1-based) drops its items and shifts items in later
+ * boxes down by one, matching how the remaining packages are renumbered.
+ */
+export function itemsAfterRemovingBox(items: BookingItem[], removed: number): BookingItem[] {
+  return items
+    .filter((i) => i.boxNumber !== removed)
+    .map((i) => (i.boxNumber > removed ? { ...i, boxNumber: i.boxNumber - 1 } : i))
 }
 
 // --- Step 2 ----------------------------------------------------------------
@@ -157,7 +242,11 @@ export function bookingToStep2(b: Booking): Step2FormValues {
             email: c.email ?? '',
             reference: c.reference ?? '',
           }
-        : {}),
+        : // First visit to step 2: carry the destination chosen in step 1.
+          {
+            country: b.consigneeCountryCode ?? '',
+            zipCode: b.consigneeZipCode ?? '',
+          }),
       note: c?.note ?? '',
     },
     invoice: {
@@ -167,6 +256,7 @@ export function bookingToStep2(b: Booking): Step2FormValues {
       invoiceDate: toDateInput(inv?.invoiceDate) ?? '',
       invoiceTerms: inv?.invoiceTerms ?? '',
     },
+    items: (b.items ?? []).map(bookingItemToForm),
   }
 }
 
@@ -184,6 +274,7 @@ export function emptyStep2(): Step2FormValues {
     },
     consignee: { ...emptyAddress(), note: '' },
     invoice: { invoiceType: '', currency: '', invoiceNo: '', invoiceDate: '', invoiceTerms: '' },
+    items: [],
   }
 }
 
@@ -244,6 +335,9 @@ export function step2ToPartiesInput(values: Step2FormValues): PartiesInput {
     }
     parties.invoice = invoice
   }
+
+  // Replace-all: the form holds the complete list, so always send it.
+  parties.items = itemsToInput(values.items)
 
   return parties
 }

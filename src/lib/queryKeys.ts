@@ -7,5 +7,8 @@ export const queryKeys = {
   bookingsRoot: ['bookings'] as const,
   booking: (id: string) => ['booking', id] as const,
   bookingCounts: ['booking-counts'] as const,
+  countries: ['admin-countries'] as const,
+  bookableCountries: ['bookable-countries'] as const,
+  postalSearch: (country: string, q: string) => ['postal-search', country, q] as const,
   kycDownload: (path: string) => ['kyc-download', path] as const,
 }

@@ -26,6 +26,7 @@ import {
   step2ToPartiesInput,
 } from '@/lib/bookingMapping'
 import type { Step1FormValues, Step2FormValues } from '@/lib/bookingSchemas'
+import type { BookingItem } from '@/lib/types'
 
 export default function BookingWizardPage() {
   const { id } = useParams<{ id: string }>()
@@ -63,7 +64,8 @@ export default function BookingWizardPage() {
   }, [booking, navigate])
 
   const handleConflict = (error: unknown): boolean => {
-    if (error instanceof ApiRequestError && error.status === 409) {
+    // 409 also covers item/box mismatches; only a status conflict means "not a draft".
+    if (error instanceof ApiRequestError && error.status === 409 && !/box|item/i.test(error.message)) {
       toast.error('This booking can no longer be edited.')
       if (id) {
         bookingQuery.refetch()
@@ -75,14 +77,14 @@ export default function BookingWizardPage() {
   }
 
   // --- Step 1 ---------------------------------------------------------------
-  const onStep1 = async (values: Step1FormValues) => {
+  const onStep1 = async (values: Step1FormValues, items?: BookingItem[]) => {
     try {
       if (!id) {
         const created = await createMut.mutateAsync(step1ToCreateInput(values))
         toast.success('Draft created.')
         navigate(`/dashboard/bookings/${created.id}/edit?step=2`)
       } else {
-        await updateMut.mutateAsync(step1ToUpdateInput(values))
+        await updateMut.mutateAsync(step1ToUpdateInput(values, items))
         toast.success('Shipment updated.')
         goStep(2)
       }
@@ -162,6 +164,7 @@ export default function BookingWizardPage() {
           submitting={createMut.isPending || updateMut.isPending}
           submitLabel={id ? 'Save & continue' : 'Continue'}
           onSubmit={onStep1}
+          items={booking?.items}
         />
       ) : !booking ? (
         <div className="flex items-center justify-center py-20">
@@ -170,6 +173,7 @@ export default function BookingWizardPage() {
       ) : step === 2 ? (
         <Step2Parties
           defaultValues={booking ? bookingToStep2(booking) : emptyStep2()}
+          packages={booking.packages}
           submitting={partiesMut.isPending}
           onSubmit={onStep2}
           onBack={() => goStep(1)}

@@ -31,16 +31,20 @@ import {
 } from '@/components/ui/select'
 import { AddressFields } from '@/components/booking/AddressFields'
 import { KycUploader } from '@/components/booking/KycUploader'
+import { ItemsCard } from '@/components/booking/ItemsCard'
+import type { Package } from '@/lib/types'
 
 export type PartiesIntent = 'continue' | 'later'
 
 export function Step2Parties({
   defaultValues,
+  packages,
   submitting,
   onSubmit,
   onBack,
 }: {
   defaultValues: Step2FormValues
+  packages: Package[]
   submitting: boolean
   onSubmit: (values: Step2FormValues, intent: PartiesIntent) => void
   onBack: () => void
@@ -285,6 +289,8 @@ export function Step2Parties({
             </CardContent>
           </Card>
         </div>
+
+        <ItemsCard packages={packages} />
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Button type="button" variant="ghost" onClick={onBack} disabled={submitting}>

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { INVOICE_TYPES, KYC_TYPES, SHIPMENT_TYPES } from '@/lib/types'
+import { INVOICE_TYPES, ITEM_PRIORITIES, KYC_TYPES, SHIPMENT_TYPES } from '@/lib/types'
 
 // Numeric fields are held as strings in form state (native number inputs emit
 // strings) and converted to numbers when building the API payload. This keeps
@@ -28,7 +28,14 @@ export const packageSchema = z.object({
 export type PackageFormValues = z.infer<typeof packageSchema>
 
 export const step1Schema = z.object({
-  courierProviderId: z.string().min(1, 'Select a courier provider'),
+  consigneeCountryCode: z.string().min(1, 'Choose where the shipment is going'),
+  // Required only for zip-level-rate countries; enforced in Step1Shipment,
+  // which knows the selected country.
+  consigneeZipCode: z.string().trim(),
+  // Set by picking a rate quote, not typed in.
+  courierProviderId: z.string().min(1, 'Get rates, then choose a courier'),
+  ratePerKg: z.number().nullable(),
+  totalPrice: z.number().nullable(),
   shipmentType: z.enum(SHIPMENT_TYPES),
   shipmentDate: z.string().min(1, 'Select a shipment date'),
   referenceNumber: z.string().max(80).optional(),
@@ -91,9 +98,33 @@ export const invoiceSchema = z
     message: 'Invoice type is required',
   })
 
+export const itemSchema = z.object({
+  boxNumber: z.number().int().min(1),
+  priority: z.enum(ITEM_PRIORITIES),
+  name: z.string().trim().min(1, 'Enter what the item is'),
+  quantity: z
+    .string()
+    .trim()
+    .min(1, 'Required')
+    .refine((v) => /^\d+$/.test(v) && Number(v) >= 1, 'Whole number, 1 or more'),
+  price: z
+    .string()
+    .trim()
+    .min(1, 'Required')
+    .refine((v) => /^\d+(\.\d{1,2})?$/.test(v), 'Up to 2 decimals'),
+  hsnCode: z.string().trim().min(1, 'Required'),
+  // Grams; optional.
+  weight: z
+    .string()
+    .trim()
+    .refine((v) => !v || (Number.isFinite(Number(v)) && Number(v) > 0), 'Must be more than 0'),
+})
+export type ItemFormValues = z.infer<typeof itemSchema>
+
 export const step2Schema = z.object({
   shipper: shipperSchema,
   consignee: consigneeSchema,
   invoice: invoiceSchema,
+  items: z.array(itemSchema),
 })
 export type Step2FormValues = z.infer<typeof step2Schema>

@@ -10,6 +10,7 @@ import {
   X,
   ChevronDown,
   Search,
+  Earth,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
@@ -25,20 +26,47 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-const NAV = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/dashboard/bookings', label: 'Bookings', icon: Package, end: false },
-  { to: '/dashboard/bookings/new', label: 'New Booking', icon: PlusCircle, end: false },
-  { to: '/dashboard/profile', label: 'Profile', icon: User, end: false },
+const NAV_SECTIONS = [
+  {
+    label: 'Menu',
+    items: [
+      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
+      { to: '/dashboard/bookings', label: 'Bookings', icon: Package, end: false },
+      { to: '/dashboard/bookings/new', label: 'New Booking', icon: PlusCircle, end: false },
+      { to: '/dashboard/profile', label: 'Profile', icon: User, end: false },
+    ],
+  },
+  {
+    label: 'Admin',
+    items: [{ to: '/dashboard/countries', label: 'Manage Countries', icon: Earth, end: false }],
+  },
 ]
 
 function NavItems({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <nav className="flex flex-col gap-1 px-3">
-      <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8291a8]">
-        Menu
-      </p>
-      {NAV.map(({ to, label, icon: Icon, end }) => (
+    <nav className="flex flex-col gap-6 px-3">
+      {NAV_SECTIONS.map((section) => (
+        <div key={section.label} className="flex flex-col gap-1">
+          <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8291a8]">
+            {section.label}
+          </p>
+          <NavList items={section.items} onNavigate={onNavigate} />
+        </div>
+      ))}
+    </nav>
+  )
+}
+
+function NavList({
+  items,
+  onNavigate,
+}: {
+  items: (typeof NAV_SECTIONS)[number]['items']
+  onNavigate?: () => void
+}) {
+  return (
+    <>
+      {items.map(({ to, label, icon: Icon, end }) => (
         <NavLink
           key={to}
           to={to}
@@ -67,7 +95,7 @@ function NavItems({ onNavigate }: { onNavigate?: () => void }) {
           )}
         </NavLink>
       ))}
-    </nav>
+    </>
   )
 }
 

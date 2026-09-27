@@ -9,6 +9,7 @@ import BookingsListPage from '@/pages/dashboard/BookingsListPage'
 import BookingWizardPage from '@/pages/dashboard/BookingWizardPage'
 import BookingDetailPage from '@/pages/dashboard/BookingDetailPage'
 import ProfilePage from '@/pages/dashboard/ProfilePage'
+import CountriesPage from '@/pages/dashboard/CountriesPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { DashboardLayout } from '@/components/DashboardLayout'
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
               { path: 'bookings/:id', element: <BookingDetailPage /> },
               { path: 'bookings/:id/edit', element: <BookingWizardPage /> },
               { path: 'profile', element: <ProfilePage /> },
+              { path: 'countries', element: <CountriesPage /> },
             ],
           },
         ],

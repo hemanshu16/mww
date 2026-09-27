@@ -94,6 +94,8 @@ export interface CourierProvider {
 // ---------------------------------------------------------------------------
 export interface Package {
   id: string
+  /** 1-based position; packages are sorted by it. */
+  boxNumber?: number
   actualWeight: number
   lengthCm: number
   widthCm: number
@@ -101,6 +103,34 @@ export interface Package {
   volumetricDivisor: number
   volumetricWeight: number
   chargeableWeight: number
+}
+
+export const ITEM_PRIORITIES = ['NORMAL', 'HIGH'] as const
+export type ItemPriority = (typeof ITEM_PRIORITIES)[number]
+
+/** A declared item inside one of the booking's boxes. */
+export interface BookingItem {
+  id: string
+  lineNumber: number
+  boxNumber: number
+  priority: ItemPriority
+  name: string
+  quantity: number
+  price: number
+  hsnCode: string
+  /** Grams. */
+  weight: number | null
+}
+
+export interface ItemInput {
+  boxNumber: number
+  priority?: ItemPriority
+  name: string
+  quantity: number
+  price: number
+  hsnCode: string
+  /** Grams. */
+  weight?: number
 }
 
 export interface BookingSummary {
@@ -184,6 +214,12 @@ export interface Booking {
   shipper: Shipper | null
   consignee: Consignee | null
   invoice: Invoice | null
+  /** Always present; ordered as sent. */
+  items?: BookingItem[]
+  consigneeCountryCode?: string | null
+  consigneeZipCode?: string | null
+  ratePerKg?: number | null
+  totalPrice?: number | null
   createdAt: string
   updatedAt: string
 }
@@ -198,6 +234,39 @@ export interface Pagination {
 export interface BookingList {
   items: Booking[]
   pagination: Pagination
+}
+
+// ---------------------------------------------------------------------------
+// Countries (admin)
+// ---------------------------------------------------------------------------
+export interface Country {
+  id: string
+  name: string
+  alpha2: string
+  alpha3: string
+  region: string | null
+  subregion: string | null
+  flagUrl: string | null
+  isVisible: boolean
+  isZipcodeLevelRates: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CountryList {
+  items: Country[]
+  pagination: Pagination
+}
+
+export interface CountryInput {
+  name: string
+  alpha2: string
+  alpha3: string
+  region?: string | null
+  subregion?: string | null
+  flagUrl?: string | null
+  isVisible?: boolean
+  isZipcodeLevelRates?: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -218,6 +287,14 @@ export interface CreateBookingInput {
   referenceNumber?: string | null
   remarks?: string | null
   packages: PackageInput[]
+  /** ISO alpha-2 of the destination country. */
+  consigneeCountryCode: string
+  /** Only when the destination prices by zip code. */
+  consigneeZipCode?: string
+  /** Chosen quote: price per chargeable kg (INR). */
+  ratePerKg?: number
+  /** Chosen quote: ratePerKg × chargeable weight (INR). */
+  price?: number
 }
 
 export type UpdateBookingInput = Partial<{
@@ -227,6 +304,12 @@ export type UpdateBookingInput = Partial<{
   referenceNumber: string | null
   remarks: string | null
   packages: PackageInput[]
+  consigneeCountryCode: string
+  consigneeZipCode: string | null
+  ratePerKg: number | null
+  price: number | null
+  /** Replace-all: the list sent becomes the complete item list. */
+  items: ItemInput[]
 }>
 
 export interface ShipperInput {
@@ -281,6 +364,8 @@ export interface PartiesInput {
   shipper?: ShipperInput
   consignee?: ConsigneeInput
   invoice?: InvoiceInput | null
+  /** Replace-all; omit to leave items unchanged. */
+  items?: ItemInput[]
 }
 
 // ---------------------------------------------------------------------------

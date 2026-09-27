@@ -124,6 +124,8 @@ export const apiClient = {
     apiRequest<T>(path, { ...opts, method: 'PUT', body }),
   patch: <T>(path: string, body?: unknown, opts?: RequestOptions) =>
     apiRequest<T>(path, { ...opts, method: 'PATCH', body }),
+  delete: <T>(path: string, opts?: RequestOptions) =>
+    apiRequest<T>(path, { ...opts, method: 'DELETE' }),
 }
 
 export function getApiErrorMessage(error: unknown, fallback: string): string {
