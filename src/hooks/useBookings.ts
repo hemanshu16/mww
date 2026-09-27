@@ -10,13 +10,26 @@ import {
   type ListBookingsParams,
 } from '@/lib/api/bookings'
 import { queryKeys } from '@/lib/queryKeys'
-import type { Booking, CreateBookingInput, PartiesInput, UpdateBookingInput } from '@/lib/types'
+import type {
+  Booking,
+  CreateBookingInput,
+  PartiesInput,
+  UpdateBookingInput,
+  WalletSummary,
+} from '@/lib/types'
+
+/** True when the wallet is known to be unable to cover `price`. */
+export function isShortOfFunds(price: number | null, wallet: WalletSummary | undefined): boolean {
+  return price != null && !!wallet && price > wallet.availableBalance
+}
 
 export function useBookings(params: ListBookingsParams) {
   return useQuery({
     queryKey: queryKeys.bookings(params),
     queryFn: () => listBookings(params),
     placeholderData: (prev) => prev,
+    // Staff can change price and status after submit; always show the latest.
+    staleTime: 0,
   })
 }
 
@@ -25,6 +38,7 @@ export function useBooking(id: string | undefined) {
     queryKey: queryKeys.booking(id ?? ''),
     queryFn: () => getBooking(id as string),
     enabled: !!id,
+    staleTime: 0,
   })
 }
 
@@ -63,10 +77,30 @@ export function useUpsertParties(id: string) {
 
 export function useSubmitBooking(id: string) {
   const write = useBookingCacheWriter()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: () => submitBooking(id),
-    onSuccess: write,
+    onSuccess: (booking) => {
+      write(booking)
+      // Submitting debits the wallet.
+      qc.invalidateQueries({ queryKey: queryKeys.wallet })
+      qc.invalidateQueries({ queryKey: queryKeys.walletTransactionsRoot })
+    },
+    // Our cached balance was stale; refresh it so the shortfall warning shows.
+    onError: (error) => {
+      if (isInsufficientBalanceError(error)) qc.invalidateQueries({ queryKey: queryKeys.wallet })
+    },
   })
+}
+
+/** Server message when the wallet can't cover the booking price. */
+export function isInsufficientBalanceError(error: unknown): boolean {
+  return error instanceof Error && /insufficient wallet balance/i.test(error.message)
+}
+
+/** Price debited on submit; older responses only carry `totalPrice`. */
+export function bookingPrice(booking: Booking): number | null {
+  return booking.price ?? booking.totalPrice ?? null
 }
 
 export function useCancelBooking(id: string) {

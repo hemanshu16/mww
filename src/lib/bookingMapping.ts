@@ -33,7 +33,9 @@ export function emptyStep1(): Step1FormValues {
     shipmentDate: todayInput(),
     referenceNumber: '',
     remarks: '',
-    packages: [{ actualWeight: '', lengthCm: '', widthCm: '', heightCm: '', volumetricDivisor: '' }],
+    packages: [
+      { actualWeight: '', lengthCm: '', widthCm: '', heightCm: '', volumetricDivisor: '' },
+    ],
   }
 }
 
@@ -43,7 +45,7 @@ export function bookingToStep1(b: Booking): Step1FormValues {
     consigneeZipCode: b.consigneeZipCode ?? '',
     courierProviderId: b.courierProviderId,
     ratePerKg: b.ratePerKg ?? null,
-    totalPrice: b.totalPrice ?? null,
+    totalPrice: b.price ?? b.totalPrice ?? null,
     shipmentType: b.shipmentType,
     shipmentDate: toDateInput(b.shipmentDate) || todayInput(),
     referenceNumber: b.referenceNumber ?? '',
@@ -106,9 +108,6 @@ export function step1ToUpdateInput(
     referenceNumber: nn(values.referenceNumber),
     remarks: nn(values.remarks),
     packages: toPackageInputs(values),
-    consigneeCountryCode: values.consigneeCountryCode,
-    consigneeZipCode: nn(values.consigneeZipCode),
-    ratePerKg: values.ratePerKg,
     price: values.totalPrice,
   }
   if (items) input.items = items.map(bookingItemToInput)
@@ -117,7 +116,15 @@ export function step1ToUpdateInput(
 
 // --- Items -----------------------------------------------------------------
 export function emptyItem(boxNumber: number): ItemFormValues {
-  return { boxNumber, priority: 'NORMAL', name: '', quantity: '1', price: '', hsnCode: '', weight: '' }
+  return {
+    boxNumber,
+    priority: 'NORMAL',
+    name: '',
+    quantity: '1',
+    price: '',
+    hsnCode: '',
+    weight: '',
+  }
 }
 
 function bookingItemToForm(i: BookingItem): ItemFormValues {

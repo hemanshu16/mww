@@ -3,7 +3,13 @@ import { useForm, useFieldArray, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CircleCheck, Plus, Trash2 } from 'lucide-react'
 import { step1Schema, type Step1FormValues } from '@/lib/bookingSchemas'
-import { SHIPMENT_TYPES, SHIPMENT_TYPE_LABELS, type BookingItem, type Country, type CourierProvider } from '@/lib/types'
+import {
+  SHIPMENT_TYPES,
+  SHIPMENT_TYPE_LABELS,
+  type BookingItem,
+  type Country,
+  type CourierProvider,
+} from '@/lib/types'
 import { itemsAfterRemovingBox } from '@/lib/bookingMapping'
 import { useBookableCountries } from '@/hooks/useCountries'
 import { placeLabel, type PostalPlace } from '@/lib/api/postal'
@@ -51,6 +57,8 @@ const emptyPackage = {
   volumetricDivisor: '',
 }
 
+export type ProviderOption = Pick<CourierProvider, 'id' | 'name' | 'logoUrl'>
+
 export function Step1Shipment({
   defaultValues,
   providers,
@@ -59,9 +67,13 @@ export function Step1Shipment({
   submitLabel,
   onSubmit,
   items: initialItems = [],
+  lockDestination = false,
+  destinationLabel,
+  pricing = 'quote',
+  secondaryAction,
 }: {
   defaultValues: Step1FormValues
-  providers: CourierProvider[]
+  providers: ProviderOption[]
   providersLoading: boolean
   submitting: boolean
   submitLabel: string
@@ -69,11 +81,20 @@ export function Step1Shipment({
   onSubmit: (values: Step1FormValues, items?: BookingItem[]) => void
   /** The draft's declared items (edit mode), so removing a box keeps them consistent. */
   items?: BookingItem[]
+  /** Editing: the destination is fixed after the booking is created. */
+  lockDestination?: boolean
+  /** Name for a locked destination; skips loading the customer country list. */
+  destinationLabel?: string
+  /** 'quote': pick from rate quotes (customer). 'manual': choose a courier and type the price (admin). */
+  pricing?: 'quote' | 'manual'
+  /** Extra button under the summary's submit button (e.g. Cancel). */
+  secondaryAction?: React.ReactNode
 }) {
+  const manual = pricing === 'manual'
   const [items, setItems] = useState(initialItems)
   const [itemsChanged, setItemsChanged] = useState(false)
   const [pendingRemoval, setPendingRemoval] = useState<number | null>(null)
-  const countriesQuery = useBookableCountries()
+  const countriesQuery = useBookableCountries(!(lockDestination && destinationLabel))
   const countries = useMemo(() => countriesQuery.data ?? [], [countriesQuery.data])
   const countryMap = useMemo(() => new Map(countries.map((c) => [c.alpha2, c])), [countries])
   // The resolver is created once, so it reads the latest countries through a ref.
@@ -82,20 +103,23 @@ export function Step1Shipment({
     countryRef.current = countryMap
   }, [countryMap])
 
-  // Zip code is required only when the chosen country prices by zip code.
   const schema = useMemo(
     () =>
       step1Schema.superRefine((v, ctx) => {
+        // Zip code is required only when the chosen country prices by zip code.
         const c = countryRef.current.get(v.consigneeCountryCode)
-        if (c?.isZipcodeLevelRates && !v.consigneeZipCode) {
+        if (!lockDestination && c?.isZipcodeLevelRates && !v.consigneeZipCode) {
           ctx.addIssue({
             code: 'custom',
             path: ['consigneeZipCode'],
             message: `Enter a zip code. Rates for ${c.name} depend on it.`,
           })
         }
+        if (manual && (v.totalPrice === null || !(v.totalPrice >= 0))) {
+          ctx.addIssue({ code: 'custom', path: ['totalPrice'], message: 'Enter the price' })
+        }
       }),
-    [],
+    [lockDestination, manual],
   )
 
   const form = useForm<Step1FormValues>({
@@ -160,6 +184,8 @@ export function Step1Shipment({
   const [rateError, setRateError] = useState<string>()
   const selectedProviderId = useWatch({ control: form.control, name: 'courierProviderId' })
   const selectedQuote = quotes.find((q) => q.courierProviderId === selectedProviderId)
+  const manualPrice = useWatch({ control: form.control, name: 'totalPrice' })
+  const manualProvider = providers.find((p) => p.id === selectedProviderId)
 
   const rateStatus: RateStatus = quoting
     ? 'loading'
@@ -171,12 +197,12 @@ export function Step1Shipment({
 
   // A price chosen for the old destination/weight no longer applies.
   useEffect(() => {
-    if (rateStatus === 'stale' && form.getValues('courierProviderId')) {
+    if (!manual && rateStatus === 'stale' && form.getValues('courierProviderId')) {
       form.setValue('courierProviderId', '')
       form.setValue('ratePerKg', null)
       form.setValue('totalPrice', null)
     }
-  }, [rateStatus, form])
+  }, [manual, rateStatus, form])
 
   const selectQuote = (q: RateQuote) => {
     form.setValue('courierProviderId', q.courierProviderId, { shouldDirty: true })
@@ -188,7 +214,11 @@ export function Step1Shipment({
   const fetchRates = async (keepProviderId?: string) => {
     setRateError(undefined)
     if (providers.length === 0) {
-      setRateError(providersLoading ? 'Couriers are still loading. Try again in a moment.' : 'No couriers are available.')
+      setRateError(
+        providersLoading
+          ? 'Couriers are still loading. Try again in a moment.'
+          : 'No couriers are available.',
+      )
       return
     }
     const key = quoteKey
@@ -223,7 +253,14 @@ export function Step1Shipment({
   // Editing a draft: re-quote once couriers load so the saved choice shows as selected.
   const autoQuoted = useRef(false)
   useEffect(() => {
-    if (autoQuoted.current || !defaultValues.courierProviderId || providers.length === 0) return
+    if (
+      manual ||
+      autoQuoted.current ||
+      !defaultValues.courierProviderId ||
+      providers.length === 0
+    ) {
+      return
+    }
     autoQuoted.current = true
     void fetchRates(defaultValues.courierProviderId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -238,93 +275,123 @@ export function Step1Shipment({
               <div>
                 <h2 className="font-heading text-lg">Destination</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Where the shipment is delivered. Rates are based on it.
+                  {lockDestination
+                    ? "The destination can't be changed after the booking is created."
+                    : 'Where the shipment is delivered. Rates are based on it.'}
                 </p>
               </div>
-              <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="consigneeCountryCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Destination country</FormLabel>
-                      <FormControl>
-                        <CountryCombobox
-                          value={field.value}
-                          onChange={changeCountry}
-                          onBlur={field.onBlur}
-                          countries={countries}
-                          loading={countriesQuery.isLoading}
-                          error={countriesQuery.isError}
+              {lockDestination ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-medium">Destination country</p>
+                    <div className="flex h-11 items-center gap-2 rounded-[8px] border border-border bg-[#f8fafc] px-3 text-sm">
+                      {destination && (
+                        <CountryFlag
+                          flagUrl={destination.flagUrl}
+                          alpha2={destination.alpha2}
+                          className="h-[15px] w-5"
                         />
-                      </FormControl>
-                      {countriesQuery.isError ? (
-                        <p className="text-xs font-medium text-destructive">
-                          Countries didn&apos;t load.{' '}
-                          <button
-                            type="button"
-                            onClick={() => countriesQuery.refetch()}
-                            className="underline underline-offset-2"
-                          >
-                            Try again
-                          </button>
-                        </p>
-                      ) : (
-                        <FormMessage />
                       )}
-                    </FormItem>
-                  )}
-                />
+                      <span className="truncate">
+                        {destination?.name ?? destinationLabel ?? (countryCode || '—')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-medium">Destination zip code</p>
+                    <div className="flex h-11 items-center rounded-[8px] border border-border bg-[#f8fafc] px-3 font-mono text-sm">
+                      {zipCode || (
+                        <span className="font-sans text-muted-foreground">Not needed</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="consigneeCountryCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required>Destination country</FormLabel>
+                        <FormControl>
+                          <CountryCombobox
+                            value={field.value}
+                            onChange={changeCountry}
+                            onBlur={field.onBlur}
+                            countries={countries}
+                            loading={countriesQuery.isLoading}
+                            error={countriesQuery.isError}
+                          />
+                        </FormControl>
+                        {countriesQuery.isError ? (
+                          <p className="text-xs font-medium text-destructive">
+                            Countries didn&apos;t load.{' '}
+                            <button
+                              type="button"
+                              onClick={() => countriesQuery.refetch()}
+                              className="underline underline-offset-2"
+                            >
+                              Try again
+                            </button>
+                          </p>
+                        ) : (
+                          <FormMessage />
+                        )}
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="consigneeZipCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required={!!destination?.isZipcodeLevelRates}>
-                        Destination zip code
-                      </FormLabel>
-                      {!destination ? (
-                        <div className="flex h-11 items-center rounded-[8px] border border-dashed border-[#d5dde8] bg-[#f8fafc] px-3 text-sm text-[#9aa8ba]">
-                          Choose a country first
-                        </div>
-                      ) : !destination.isZipcodeLevelRates ? (
-                        <>
-                          <div className="flex h-11 items-center rounded-[8px] border border-dashed border-[#d5dde8] bg-[#f8fafc] px-3 text-sm text-[#526581]">
-                            Not needed
+                  <FormField
+                    control={form.control}
+                    name="consigneeZipCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required={!!destination?.isZipcodeLevelRates}>
+                          Destination zip code
+                        </FormLabel>
+                        {!destination ? (
+                          <div className="flex h-11 items-center rounded-[8px] border border-dashed border-[#d5dde8] bg-[#f8fafc] px-3 text-sm text-[#9aa8ba]">
+                            Choose a country first
                           </div>
-                          <FormDescription>
-                            {destination.name} has one rate for the whole country.
-                          </FormDescription>
-                        </>
-                      ) : (
-                        <>
-                          <FormControl>
-                            <PostalCodeInput
-                              countryCode={destination.alpha2}
-                              countryName={destination.name}
-                              value={field.value}
-                              onChange={field.onChange}
-                              onPlaceChange={setPlace}
-                              onBlur={field.onBlur}
-                            />
-                          </FormControl>
-                          {form.formState.errors.consigneeZipCode ? (
-                            <FormMessage />
-                          ) : place && place.postalCode === field.value ? (
-                            <p className="flex items-center gap-1.5 text-xs text-[#047857]">
-                              <CircleCheck className="size-3.5" />
-                              {placeLabel(place)}
-                            </p>
-                          ) : (
-                            <FormDescription>Search by city name or zip code.</FormDescription>
-                          )}
-                        </>
-                      )}
-                    </FormItem>
-                  )}
-                />
-              </div>
+                        ) : !destination.isZipcodeLevelRates ? (
+                          <>
+                            <div className="flex h-11 items-center rounded-[8px] border border-dashed border-[#d5dde8] bg-[#f8fafc] px-3 text-sm text-[#526581]">
+                              Not needed
+                            </div>
+                            <FormDescription>
+                              {destination.name} has one rate for the whole country.
+                            </FormDescription>
+                          </>
+                        ) : (
+                          <>
+                            <FormControl>
+                              <PostalCodeInput
+                                countryCode={destination.alpha2}
+                                countryName={destination.name}
+                                value={field.value}
+                                onChange={field.onChange}
+                                onPlaceChange={setPlace}
+                                onBlur={field.onBlur}
+                              />
+                            </FormControl>
+                            {form.formState.errors.consigneeZipCode ? (
+                              <FormMessage />
+                            ) : place && place.postalCode === field.value ? (
+                              <p className="flex items-center gap-1.5 text-xs text-[#047857]">
+                                <CircleCheck className="size-3.5" />
+                                {placeLabel(place)}
+                              </p>
+                            ) : (
+                              <FormDescription>Search by city name or zip code.</FormDescription>
+                            )}
+                          </>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -430,7 +497,10 @@ export function Step1Shipment({
                   )
                   const chg = chargeableWeight(Number(p?.actualWeight), vol)
                   return (
-                    <div key={fieldItem.id} className="rounded-lg border border-border bg-muted/30 p-4">
+                    <div
+                      key={fieldItem.id}
+                      className="rounded-lg border border-border bg-muted/30 p-4"
+                    >
                       <div className="mb-3 flex items-center justify-between">
                         <span className="text-sm font-semibold">Box {index + 1}</span>
                         {fields.length > 1 && (
@@ -454,7 +524,13 @@ export function Step1Shipment({
                             <FormItem>
                               <FormLabel className="text-xs">Actual (kg)</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.001" min="0" placeholder="0.0" {...field} />
+                                <Input
+                                  type="number"
+                                  step="0.001"
+                                  min="0"
+                                  placeholder="0.0"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -467,7 +543,13 @@ export function Step1Shipment({
                             <FormItem>
                               <FormLabel className="text-xs">Length (cm)</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.1" min="0" placeholder="0" {...field} />
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  placeholder="0"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -480,7 +562,13 @@ export function Step1Shipment({
                             <FormItem>
                               <FormLabel className="text-xs">Width (cm)</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.1" min="0" placeholder="0" {...field} />
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  placeholder="0"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -493,7 +581,13 @@ export function Step1Shipment({
                             <FormItem>
                               <FormLabel className="text-xs">Height (cm)</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.1" min="0" placeholder="0" {...field} />
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  placeholder="0"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -502,10 +596,12 @@ export function Step1Shipment({
                       </div>
                       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
                         <span>
-                          Volumetric: <span className="font-semibold text-foreground">{formatWeight(vol)}</span>
+                          Volumetric:{' '}
+                          <span className="font-semibold text-foreground">{formatWeight(vol)}</span>
                         </span>
                         <span>
-                          Chargeable: <span className="font-semibold text-primary">{formatWeight(chg)}</span>
+                          Chargeable:{' '}
+                          <span className="font-semibold text-primary">{formatWeight(chg)}</span>
                         </span>
                       </div>
                     </div>
@@ -518,20 +614,79 @@ export function Step1Shipment({
           <Card>
             <CardContent className="space-y-4 p-6">
               <div>
-                <h2 className="font-heading text-lg">Courier &amp; rate</h2>
+                <h2 className="font-heading text-lg">Courier &amp; {manual ? 'price' : 'rate'}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Compare prices for this shipment and choose a courier.
+                  {manual
+                    ? 'Choose the courier and set the price charged for this booking.'
+                    : 'Compare prices for this shipment and choose a courier.'}
                 </p>
               </div>
-              <RateOptions
-                status={rateStatus}
-                quotes={quotes}
-                selectedId={selectedProviderId}
-                onSelect={selectQuote}
-                onGetRates={onGetRates}
-                destinationName={destination?.name}
-                error={rateError ?? form.formState.errors.courierProviderId?.message}
-              />
+              {manual ? (
+                <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="courierProviderId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required>Courier</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue
+                                placeholder={
+                                  providersLoading ? 'Loading couriers…' : 'Select courier'
+                                }
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {providers.map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="totalPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required>Price (₹)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            value={field.value ?? ''}
+                            onBlur={field.onBlur}
+                            onChange={(e) =>
+                              field.onChange(e.target.value === '' ? null : Number(e.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ) : (
+                <RateOptions
+                  status={rateStatus}
+                  quotes={quotes}
+                  selectedId={selectedProviderId}
+                  onSelect={selectQuote}
+                  onGetRates={onGetRates}
+                  destinationName={destination?.name}
+                  error={rateError ?? form.formState.errors.courierProviderId?.message}
+                />
+              )}
             </CardContent>
           </Card>
         </div>
@@ -590,7 +745,9 @@ export function Step1Shipment({
                   <div className="flex items-start justify-between gap-4 border-t border-border pt-3">
                     <dt className="text-muted-foreground">Courier</dt>
                     <dd className="min-w-0 truncate text-right font-semibold">
-                      {selectedQuote && rateStatus === 'ready' ? (
+                      {manual && manualProvider ? (
+                        manualProvider.name
+                      ) : !manual && selectedQuote && rateStatus === 'ready' ? (
                         selectedQuote.providerName
                       ) : (
                         <span className="font-normal text-[#aab5c4]">Not chosen</span>
@@ -600,7 +757,15 @@ export function Step1Shipment({
                   <div className="flex items-baseline justify-between gap-4">
                     <dt className="font-medium">Price</dt>
                     <dd className="text-right">
-                      {selectedQuote && rateStatus === 'ready' ? (
+                      {manual ? (
+                        manualPrice != null && manualPrice >= 0 ? (
+                          <span className="block text-[22px] font-bold leading-7 tracking-[-0.02em] text-primary tabular-nums">
+                            {formatMoney(manualPrice)}
+                          </span>
+                        ) : (
+                          <span className="text-[#aab5c4]">Not set</span>
+                        )
+                      ) : selectedQuote && rateStatus === 'ready' ? (
                         <>
                           <span className="block text-[22px] font-bold leading-7 tracking-[-0.02em] text-primary tabular-nums">
                             {formatMoney(selectedQuote.totalPrice)}
@@ -621,20 +786,27 @@ export function Step1Shipment({
                 <Button type="submit" className="w-full" loading={submitting}>
                   {submitLabel}
                 </Button>
+                {secondaryAction}
               </CardContent>
             </Card>
           </div>
         </div>
       </form>
 
-      <Dialog open={pendingRemoval !== null} onOpenChange={(open) => !open && setPendingRemoval(null)}>
+      <Dialog
+        open={pendingRemoval !== null}
+        onOpenChange={(open) => !open && setPendingRemoval(null)}
+      >
         <DialogContent className="max-w-md">
           {pendingRemoval !== null && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-lg font-semibold">Remove box {pendingRemoval + 1}?</DialogTitle>
+                <DialogTitle className="text-lg font-semibold">
+                  Remove box {pendingRemoval + 1}?
+                </DialogTitle>
                 <DialogDescription>
-                  Its {itemsInBox(pendingRemoval).length === 1 ? 'item is' : 'items are'} removed too.
+                  Its {itemsInBox(pendingRemoval).length === 1 ? 'item is' : 'items are'} removed
+                  too.
                   {pendingRemoval + 1 < fields.length &&
                     ` Boxes after it move up one number, and their items move with them.`}
                 </DialogDescription>
@@ -643,7 +815,9 @@ export function Step1Shipment({
                 {itemsInBox(pendingRemoval).map((i) => (
                   <li key={i.id} className="flex justify-between gap-4">
                     <span className="truncate">{i.name}</span>
-                    <span className="shrink-0 tabular-nums text-muted-foreground">× {i.quantity}</span>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">
+                      × {i.quantity}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -651,7 +825,11 @@ export function Step1Shipment({
                 <Button type="button" variant="ghost" onClick={() => setPendingRemoval(null)}>
                   Keep box
                 </Button>
-                <Button type="button" variant="destructive" onClick={() => removeBox(pendingRemoval)}>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => removeBox(pendingRemoval)}
+                >
                   Remove box and items
                 </Button>
               </DialogFooter>

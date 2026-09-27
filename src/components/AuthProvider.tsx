@@ -3,20 +3,22 @@ import { AuthContext, type AuthStatus } from '@/hooks/AuthContext'
 import type { AuthSession, Profile } from '@/lib/types'
 import { getMe } from '@/lib/api/users'
 import { logout as logoutApi } from '@/lib/api/auth'
+import { queryClient } from '@/lib/queryClient'
 import {
   clearSession,
   getRefreshToken,
   getStoredProfile,
   hasSession,
-  onSessionCleared,
+  onSessionChange,
   setProfile as persistProfile,
   setSession,
 } from '@/lib/session'
 
+/** Customer auth. A staff session counts as signed out here. */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfileState] = useState<Profile | null>(() => getStoredProfile())
   const [status, setStatus] = useState<AuthStatus>(() =>
-    hasSession() ? 'loading' : 'unauthenticated',
+    hasSession('customer') ? 'loading' : 'unauthenticated',
   )
   const hydrated = useRef(false)
 
@@ -25,10 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (hydrated.current) return
     hydrated.current = true
-    if (!hasSession()) {
-      setStatus('unauthenticated')
-      return
-    }
+    if (!hasSession('customer')) return
     getMe()
       .then((fresh) => {
         persistProfile(fresh)
@@ -36,29 +35,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setStatus('authenticated')
       })
       .catch(() => {
-        clearSession(false)
+        // Never clear a session of the other kind that replaced ours meanwhile.
+        if (hasSession('customer')) clearSession()
         setProfileState(null)
         setStatus('unauthenticated')
       })
   }, [])
 
-  // React to out-of-band session clears (e.g. failed refresh in the client).
+  // Follow out-of-band changes: failed refresh, staff login, other tabs.
   useEffect(
     () =>
-      onSessionCleared(() => {
-        setProfileState(null)
-        setStatus('unauthenticated')
+      onSessionChange(() => {
+        const stored = getStoredProfile()
+        setProfileState(stored)
+        setStatus((prev) =>
+          stored ? (prev === 'loading' ? prev : 'authenticated') : 'unauthenticated',
+        )
       }),
     [],
   )
 
   const signIn = useCallback((session: AuthSession) => {
+    queryClient.clear() // never show data cached for another account
     setSession(session)
     setProfileState(session.profile)
     setStatus('authenticated')
   }, [])
 
   const signOut = useCallback(async () => {
+    if (!hasSession('customer')) return
     const refreshToken = getRefreshToken()
     if (refreshToken) {
       try {
@@ -67,9 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         /* revoke best-effort; clear locally regardless */
       }
     }
-    clearSession(false)
-    setProfileState(null)
-    setStatus('unauthenticated')
+    clearSession()
+    queryClient.clear()
   }, [])
 
   const setProfile = useCallback((next: Profile) => {

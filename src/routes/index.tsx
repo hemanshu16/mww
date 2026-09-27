@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom'
+import { AdminRoute } from '@/routes/AdminRoute'
 import App from '@/App'
 import LandingPage from '@/pages/LandingPage'
 import LoginPage from '@/pages/auth/LoginPage'
@@ -9,7 +10,7 @@ import BookingsListPage from '@/pages/dashboard/BookingsListPage'
 import BookingWizardPage from '@/pages/dashboard/BookingWizardPage'
 import BookingDetailPage from '@/pages/dashboard/BookingDetailPage'
 import ProfilePage from '@/pages/dashboard/ProfilePage'
-import CountriesPage from '@/pages/dashboard/CountriesPage'
+import PaymentsPage from '@/pages/dashboard/PaymentsPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { DashboardLayout } from '@/components/DashboardLayout'
@@ -35,11 +36,16 @@ export const router = createBrowserRouter([
               { path: 'bookings/new', element: <BookingWizardPage /> },
               { path: 'bookings/:id', element: <BookingDetailPage /> },
               { path: 'bookings/:id/edit', element: <BookingWizardPage /> },
+              { path: 'payments', element: <PaymentsPage /> },
               { path: 'profile', element: <ProfilePage /> },
-              { path: 'countries', element: <CountriesPage /> },
             ],
           },
         ],
+      },
+      // Staff console: its own login, session and permission-driven UI.
+      {
+        path: 'admin/*',
+        element: <AdminRoute />,
       },
       { path: '*', element: <NotFoundPage /> },
     ],

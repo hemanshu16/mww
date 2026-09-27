@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { Loader2 } from 'lucide-react'
+import { hasSession } from '@/lib/session'
 
 export function ProtectedRoute() {
   const { status } = useAuth()
@@ -15,6 +16,8 @@ export function ProtectedRoute() {
   }
 
   if (status === 'unauthenticated') {
+    // Staff don't use the customer area.
+    if (hasSession('staff')) return <Navigate to="/admin" replace />
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
 

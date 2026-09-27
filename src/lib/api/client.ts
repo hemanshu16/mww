@@ -1,12 +1,18 @@
 import type { ApiEnvelope, TokenPair } from '@/lib/types'
-import {
-  clearSession,
-  getAccessToken,
-  getRefreshToken,
-  setTokens,
-} from '@/lib/session'
+import type { StaffAuth } from '@/admin/types'
+import { clearSession, getAccessToken, getSession, setStaffSession, setTokens } from '@/lib/session'
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL ?? ''}`
+
+// Staff UI refetches its permissions whenever the backend answers 403.
+type ForbiddenListener = () => void
+const forbiddenListeners = new Set<ForbiddenListener>()
+export function onForbidden(fn: ForbiddenListener) {
+  forbiddenListeners.add(fn)
+  return () => {
+    forbiddenListeners.delete(fn)
+  }
+}
 
 /** Error carrying the API's human message plus the HTTP status. */
 export class ApiRequestError extends Error {
@@ -23,7 +29,10 @@ export class ApiRequestError extends Error {
 
 /** Split a `"field: msg; field2: msg2"` validation string into a field map. */
 export function parseFieldErrors(error: string): Record<string, string> | undefined {
-  const parts = error.split('; ').map((s) => s.trim()).filter(Boolean)
+  const parts = error
+    .split('; ')
+    .map((s) => s.trim())
+    .filter(Boolean)
   const map: Record<string, string> = {}
   for (const part of parts) {
     const idx = part.indexOf(': ')
@@ -45,27 +54,32 @@ interface RequestOptions {
 }
 
 // --- single-flight token refresh --------------------------------------------
-let refreshPromise: Promise<TokenPair | null> | null = null
+// Refresh tokens are single-use, so concurrent 401s must share one refresh call.
+let refreshPromise: Promise<string | null> | null = null
 
-async function refreshTokens(): Promise<TokenPair | null> {
-  const refreshToken = getRefreshToken()
-  if (!refreshToken) return null
+/** Returns the new access token, or null when the refresh failed. */
+async function refreshTokens(): Promise<string | null> {
+  const session = getSession()
+  if (!session) return null
+  const staff = session.kind === 'staff'
   try {
-    const res = await fetch(`${BASE_URL}/auth/refresh`, {
+    const res = await fetch(`${BASE_URL}${staff ? '/admin/auth/refresh' : '/auth/refresh'}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      body: JSON.stringify({ refreshToken: session.refreshToken }),
     })
-    const json = (await res.json()) as ApiEnvelope<TokenPair>
+    const json = (await res.json()) as ApiEnvelope<TokenPair | StaffAuth>
     if (!res.ok || !json.success) return null
-    setTokens(json.data)
-    return json.data
+    // Staff refreshes also carry fresh profile + permissions.
+    if (staff) setStaffSession(json.data as StaffAuth)
+    else setTokens(json.data)
+    return json.data.accessToken
   } catch {
     return null
   }
 }
 
-function ensureRefresh(): Promise<TokenPair | null> {
+function ensureRefresh(): Promise<string | null> {
   if (!refreshPromise) {
     refreshPromise = refreshTokens().finally(() => {
       refreshPromise = null
@@ -94,7 +108,7 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
   if (res.status === 401 && useAuth) {
     const refreshed = await ensureRefresh()
     if (refreshed) {
-      res = await raw(path, opts, refreshed.accessToken)
+      res = await raw(path, opts, refreshed)
     } else {
       clearSession()
       throw new ApiRequestError('Your session has expired. Please sign in again.', 401)
@@ -109,6 +123,7 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
   }
 
   if (!res.ok || !json.success) {
+    if (res.status === 403 && useAuth) forbiddenListeners.forEach((fn) => fn())
     const message = json.success === false ? json.error : `Request failed (${res.status})`
     const fieldErrors = res.status === 400 ? parseFieldErrors(message) : undefined
     throw new ApiRequestError(message, res.status, fieldErrors)

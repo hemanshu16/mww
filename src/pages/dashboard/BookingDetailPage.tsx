@@ -2,7 +2,16 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ArrowLeft, Ban, Loader2, Pencil, Send } from 'lucide-react'
-import { useBooking, useCancelBooking, useSubmitBooking } from '@/hooks/useBookings'
+import {
+  bookingPrice,
+  isShortOfFunds,
+  isInsufficientBalanceError,
+  useBooking,
+  useCancelBooking,
+  useSubmitBooking,
+} from '@/hooks/useBookings'
+import { useWallet } from '@/hooks/useWallet'
+import { WalletFundsCheck } from '@/components/booking/WalletFundsCheck'
 import { ApiRequestError, getApiErrorMessage } from '@/lib/api/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -26,6 +35,7 @@ export default function BookingDetailPage() {
   const submitMut = useSubmitBooking(id ?? '')
   const cancelMut = useCancelBooking(id ?? '')
   const [cancelOpen, setCancelOpen] = useState(false)
+  const wallet = useWallet()
 
   if (isLoading) {
     return (
@@ -42,7 +52,9 @@ export default function BookingDetailPage() {
         <CardContent className="py-16 text-center">
           <p className="font-medium">{notFound ? 'Booking not found' : 'Something went wrong'}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {notFound ? 'This booking may have been removed or never existed.' : 'Please try again.'}
+            {notFound
+              ? 'This booking may have been removed or never existed.'
+              : 'Please try again.'}
           </p>
           <Button asChild variant="outline" className="mt-4">
             <Link to="/dashboard/bookings">Back to bookings</Link>
@@ -53,13 +65,26 @@ export default function BookingDetailPage() {
   }
 
   const isDraft = booking.status === 'DRAFT'
-  const canCancel = booking.status === 'DRAFT' || booking.status === 'BOOKED'
+  // Only drafts can be cancelled.
+  const canCancel = isDraft
+  const price = bookingPrice(booking)
+  const shortOfFunds = isShortOfFunds(price, wallet.data)
 
   const handleSubmit = async () => {
     try {
       await submitMut.mutateAsync()
       toast.success('Booking submitted!')
     } catch (err) {
+      if (isInsufficientBalanceError(err)) {
+        toast.error(getApiErrorMessage(err, 'Insufficient wallet balance.'), {
+          description: 'Add funds by bank transfer, or contact your Monarch account manager.',
+          action: {
+            label: 'View bank details',
+            onClick: () => navigate('/dashboard/payments?pay=1'),
+          },
+        })
+        return
+      }
       if (err instanceof ApiRequestError && err.status === 400) {
         toast.error(err.message)
         navigate(`/dashboard/bookings/${booking.id}/edit?step=2`)
@@ -110,7 +135,7 @@ export default function BookingDetailPage() {
                   <Pencil className="size-4" /> Edit
                 </Link>
               </Button>
-              <Button onClick={handleSubmit} loading={submitMut.isPending}>
+              <Button onClick={handleSubmit} loading={submitMut.isPending} disabled={shortOfFunds}>
                 <Send className="size-4" /> Submit
               </Button>
             </>
@@ -126,6 +151,10 @@ export default function BookingDetailPage() {
           )}
         </div>
       </div>
+
+      {isDraft && (
+        <WalletFundsCheck price={price} wallet={wallet.data} loading={wallet.isLoading} />
+      )}
 
       <BookingRecap booking={booking} />
 

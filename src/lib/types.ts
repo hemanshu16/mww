@@ -23,7 +23,14 @@ export type ShipmentType = (typeof SHIPMENT_TYPES)[number]
 export const BOOKING_STATUSES = ['DRAFT', 'BOOKED', 'CANCELLED'] as const
 export type BookingStatus = (typeof BOOKING_STATUSES)[number]
 
-export const KYC_TYPES = ['PAN', 'AADHAAR', 'PASSPORT', 'GST', 'VOTER_ID', 'DRIVING_LICENSE'] as const
+export const KYC_TYPES = [
+  'PAN',
+  'AADHAAR',
+  'PASSPORT',
+  'GST',
+  'VOTER_ID',
+  'DRIVING_LICENSE',
+] as const
 export type KycType = (typeof KYC_TYPES)[number]
 
 export const INVOICE_TYPES = ['COMMERCIAL', 'PROFORMA', 'GIFT', 'SAMPLE'] as const
@@ -220,6 +227,8 @@ export interface Booking {
   consigneeZipCode?: string | null
   ratePerKg?: number | null
   totalPrice?: number | null
+  /** Amount debited from the wallet on submit (INR). */
+  price?: number | null
   createdAt: string
   updatedAt: string
 }
@@ -304,9 +313,7 @@ export type UpdateBookingInput = Partial<{
   referenceNumber: string | null
   remarks: string | null
   packages: PackageInput[]
-  consigneeCountryCode: string
-  consigneeZipCode: string | null
-  ratePerKg: number | null
+  // Destination and ratePerKg are fixed after create; edits don't send them.
   price: number | null
   /** Replace-all: the list sent becomes the complete item list. */
   items: ItemInput[]
@@ -381,4 +388,70 @@ export interface KycDownloadUrl {
   path: string
   signedUrl: string
   expiresIn: number
+}
+
+// ---------------------------------------------------------------------------
+// Wallet (read-only for customers)
+
+export interface WalletSummary {
+  /** Negative when the customer has booked on credit. */
+  balance: number
+  creditLimit: number
+  /** balance + creditLimit — what can still be spent on bookings. */
+  availableBalance: number
+  /** -balance when negative, otherwise 0. */
+  outstandingAmount: number
+}
+
+export type WalletTxnType = 'CREDIT' | 'DEBIT'
+export type WalletTxnCategory = 'TOPUP' | 'BOOKING_DEBIT' | 'BOOKING_REFUND' | 'ADJUSTMENT'
+export type WalletPaymentMode = 'CHEQUE' | 'NEFT' | 'RTGS' | 'IMPS' | 'UPI' | 'CASH' | 'ADJUSTMENT'
+
+export const WALLET_CATEGORY_LABELS: Record<WalletTxnCategory, string> = {
+  TOPUP: 'Payment received',
+  BOOKING_DEBIT: 'Booking charge',
+  BOOKING_REFUND: 'Refund',
+  ADJUSTMENT: 'Adjustment',
+}
+
+export interface WalletTransaction {
+  id: string
+  type: WalletTxnType
+  category: WalletTxnCategory
+  /** Always positive; `type` gives the direction. */
+  amount: number
+  balanceAfter: number
+  paymentMode: WalletPaymentMode | null
+  referenceNo: string | null
+  transactionDate: string
+  note: string | null
+  bookingId: string | null
+  bookingNumber: string | null
+  /** Admin ledger only: who recorded it; null for automatic booking debits. */
+  createdBy?: { id: string; name: string } | null
+  createdAt: string
+}
+
+export interface WalletTransactionList {
+  items: WalletTransaction[]
+  pagination: Pagination
+}
+
+// ---------------------------------------------------------------------------
+// Company payment details (customer view)
+
+export interface PaymentBankAccount {
+  bankName: string
+  accountName: string
+  accountNumber: string
+  ifscCode: string
+  branchName: string | null
+}
+
+export interface PaymentDetails {
+  /** Null until an admin saves the company profile. */
+  legalName: string | null
+  gstNumber: string | null
+  /** Active accounts only; may be empty. */
+  bankAccounts: PaymentBankAccount[]
 }

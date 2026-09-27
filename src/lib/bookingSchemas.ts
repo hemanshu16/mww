@@ -32,8 +32,8 @@ export const step1Schema = z.object({
   // Required only for zip-level-rate countries; enforced in Step1Shipment,
   // which knows the selected country.
   consigneeZipCode: z.string().trim(),
-  // Set by picking a rate quote, not typed in.
-  courierProviderId: z.string().min(1, 'Get rates, then choose a courier'),
+  // Customers set it by picking a rate quote; admins pick it directly.
+  courierProviderId: z.string().min(1, 'Choose a courier'),
   ratePerKg: z.number().nullable(),
   totalPrice: z.number().nullable(),
   shipmentType: z.enum(SHIPMENT_TYPES),

@@ -35,6 +35,19 @@ export function todayInput(): string {
   return toDateInput(new Date())
 }
 
+const inr = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
+/** Wallet amounts: always 2 decimals, e.g. ₹12,500.50. */
+export function formatINR(n: number | null | undefined): string {
+  if (n == null || Number.isNaN(n)) return '—'
+  return inr.format(n)
+}
+
 export function formatWeight(kg: number | null | undefined): string {
   if (kg == null) return '—'
   return `${kg.toLocaleString('en-IN', { maximumFractionDigits: 3 })} kg`

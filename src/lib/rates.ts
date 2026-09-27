@@ -44,7 +44,7 @@ function mockRatePerKg(providerId: string, countryCode: string): number {
 const round2 = (n: number) => Math.round(n * 100) / 100
 
 export async function getRates(
-  providers: CourierProvider[],
+  providers: Pick<CourierProvider, 'id' | 'name' | 'logoUrl'>[],
   req: RateRequest,
 ): Promise<RateQuote[]> {
   return providers

@@ -41,7 +41,12 @@ export default function LoginPage() {
       toast.success(`Welcome back, ${session.profile.firstName}`)
       navigate(from, { replace: true })
     } catch (error) {
-      if (error instanceof ApiRequestError && error.status === 403) {
+      // 403 is either "verify your email" or "account deactivated"; only the first redirects.
+      if (
+        error instanceof ApiRequestError &&
+        error.status === 403 &&
+        !/deactivated/i.test(error.message)
+      ) {
         toast.info('Please verify your email to continue.')
         navigate(`/verify-email?email=${encodeURIComponent(values.email)}`)
         return
@@ -59,6 +64,10 @@ export default function LoginPage() {
           Don&apos;t have an account?{' '}
           <Link to="/register" className="font-semibold text-primary hover:underline">
             Create one
+          </Link>
+          <span className="mx-2 text-[#c3ccd8]">·</span>
+          <Link to="/admin/login" className="hover:text-foreground hover:underline">
+            Staff sign in
           </Link>
         </>
       }

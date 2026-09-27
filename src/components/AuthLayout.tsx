@@ -6,11 +6,15 @@ export function AuthLayout({
   subtitle,
   children,
   footer,
+  panelTitle = 'Ship to the world, from India.',
+  panelText = 'Create bookings, manage KYC and invoices, and track chargeable weight — all in one place. The reach of a global network with a personal touch.',
 }: {
   title: string
   subtitle?: string
   children: React.ReactNode
   footer?: React.ReactNode
+  panelTitle?: string
+  panelText?: string
 }) {
   return (
     <div className="monarch-app grid min-h-dvh bg-background lg:grid-cols-2">
@@ -28,13 +32,8 @@ export function AuthLayout({
         </Link>
         <div className="relative z-10 max-w-md">
           <Plane className="mb-6 size-10 text-blue-200" />
-          <h2 className="font-heading text-3xl leading-tight text-white">
-            Ship to the world, from India.
-          </h2>
-          <p className="mt-4 text-blue-100">
-            Create bookings, manage KYC and invoices, and track chargeable weight — all in one
-            place. The reach of a global network with a personal touch.
-          </p>
+          <h2 className="font-heading text-3xl leading-tight text-white">{panelTitle}</h2>
+          <p className="mt-4 text-blue-100">{panelText}</p>
         </div>
         <p className="relative z-10 text-xs text-blue-200">
           © {new Date().getFullYear()} Monarch Worldwide Express

@@ -3,12 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PackagePlus, User, Warehouse } from 'lucide-react'
 import { step2Schema, type Step2FormValues } from '@/lib/bookingSchemas'
-import {
-  INVOICE_TYPES,
-  INVOICE_TYPE_LABELS,
-  KYC_TYPES,
-  KYC_TYPE_LABELS,
-} from '@/lib/types'
+import { INVOICE_TYPES, INVOICE_TYPE_LABELS, KYC_TYPES, KYC_TYPE_LABELS } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -36,18 +31,68 @@ import type { Package } from '@/lib/types'
 
 export type PartiesIntent = 'continue' | 'later'
 
+/** KYC as text only: staff can't upload or open the stored files. */
+function KycReadOnly({ values }: { values: Step2FormValues['shipper'] }) {
+  const docs = (paths: (string | undefined)[]) => paths.filter(Boolean).length
+  const block = (
+    n: 1 | 2,
+    type: string | undefined,
+    num: string | undefined,
+    fileCount: number,
+  ) => (
+    <div className="grid grid-cols-1 gap-3 rounded-lg border border-border bg-muted/20 p-4 sm:grid-cols-3">
+      <div>
+        <p className="text-xs text-muted-foreground">KYC {n} type</p>
+        <p className="mt-0.5 text-sm">
+          {type ? KYC_TYPE_LABELS[type as keyof typeof KYC_TYPE_LABELS] : '—'}
+        </p>
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground">KYC {n} number</p>
+        <p className="mt-0.5 text-sm">{num || '—'}</p>
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground">Documents</p>
+        <p className="mt-0.5 text-sm">
+          {fileCount ? `${fileCount} on file` : <span className="text-muted-foreground">None</span>}
+        </p>
+      </div>
+    </div>
+  )
+  return (
+    <div className="space-y-3">
+      {block(
+        1,
+        values.kyc1Type,
+        values.kyc1Number,
+        docs([values.kyc1DocFront, values.kyc1DocBack]),
+      )}
+      {block(2, values.kyc2Type, values.kyc2Number, docs([values.kyc2Doc]))}
+      <p className="text-xs text-muted-foreground">
+        KYC details can only be changed by the customer.
+      </p>
+    </div>
+  )
+}
+
 export function Step2Parties({
   defaultValues,
   packages,
   submitting,
   onSubmit,
   onBack,
+  kycReadOnly = false,
+  layout = 'wizard',
 }: {
   defaultValues: Step2FormValues
   packages: Package[]
   submitting: boolean
   onSubmit: (values: Step2FormValues, intent: PartiesIntent) => void
   onBack: () => void
+  /** Show KYC as read-only text, without uploads or file previews. */
+  kycReadOnly?: boolean
+  /** 'wizard': Back / Save & finish later / Save & continue. 'edit': Cancel / Save changes. */
+  layout?: 'wizard' | 'edit'
 }) {
   const form = useForm<Step2FormValues>({
     resolver: zodResolver(step2Schema),
@@ -76,108 +121,118 @@ export function Step2Parties({
               <Separator />
               <h3 className="text-sm font-semibold">KYC documents</h3>
 
-              {/* KYC 1 */}
-              <div className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="shipper.kyc1Type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>KYC 1 type</FormLabel>
-                        <Select value={field.value ?? ''} onValueChange={field.onChange}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {KYC_TYPES.map((t) => (
-                              <SelectItem key={t} value={t}>
-                                {KYC_TYPE_LABELS[t]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="shipper.kyc1Number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>KYC 1 number</FormLabel>
-                        <FormControl>
-                          <Input {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <KycUploader
-                    label="Document front"
-                    value={form.watch('shipper.kyc1DocFront')}
-                    onChange={(v) => form.setValue('shipper.kyc1DocFront', v, { shouldDirty: true })}
-                  />
-                  <KycUploader
-                    label="Document back"
-                    value={form.watch('shipper.kyc1DocBack')}
-                    onChange={(v) => form.setValue('shipper.kyc1DocBack', v, { shouldDirty: true })}
-                  />
-                </div>
-              </div>
+              {kycReadOnly ? (
+                <KycReadOnly values={defaultValues.shipper} />
+              ) : (
+                <>
+                  {/* KYC 1 */}
+                  <div className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="shipper.kyc1Type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>KYC 1 type</FormLabel>
+                            <Select value={field.value ?? ''} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {KYC_TYPES.map((t) => (
+                                  <SelectItem key={t} value={t}>
+                                    {KYC_TYPE_LABELS[t]}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="shipper.kyc1Number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>KYC 1 number</FormLabel>
+                            <FormControl>
+                              <Input {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <KycUploader
+                        label="Document front"
+                        value={form.watch('shipper.kyc1DocFront')}
+                        onChange={(v) =>
+                          form.setValue('shipper.kyc1DocFront', v, { shouldDirty: true })
+                        }
+                      />
+                      <KycUploader
+                        label="Document back"
+                        value={form.watch('shipper.kyc1DocBack')}
+                        onChange={(v) =>
+                          form.setValue('shipper.kyc1DocBack', v, { shouldDirty: true })
+                        }
+                      />
+                    </div>
+                  </div>
 
-              {/* KYC 2 */}
-              <div className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="shipper.kyc2Type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>KYC 2 type</FormLabel>
-                        <Select value={field.value ?? ''} onValueChange={field.onChange}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {KYC_TYPES.map((t) => (
-                              <SelectItem key={t} value={t}>
-                                {KYC_TYPE_LABELS[t]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="shipper.kyc2Number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>KYC 2 number</FormLabel>
-                        <FormControl>
-                          <Input {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <KycUploader
-                  label="Document"
-                  value={form.watch('shipper.kyc2Doc')}
-                  onChange={(v) => form.setValue('shipper.kyc2Doc', v, { shouldDirty: true })}
-                />
-              </div>
+                  {/* KYC 2 */}
+                  <div className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="shipper.kyc2Type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>KYC 2 type</FormLabel>
+                            <Select value={field.value ?? ''} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {KYC_TYPES.map((t) => (
+                                  <SelectItem key={t} value={t}>
+                                    {KYC_TYPE_LABELS[t]}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="shipper.kyc2Number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>KYC 2 number</FormLabel>
+                            <FormControl>
+                              <Input {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <KycUploader
+                      label="Document"
+                      value={form.watch('shipper.kyc2Doc')}
+                      onChange={(v) => form.setValue('shipper.kyc2Doc', v, { shouldDirty: true })}
+                    />
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -196,7 +251,11 @@ export function Step2Parties({
                   <FormItem>
                     <FormLabel>Delivery note</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Leave at reception…" {...field} value={field.value ?? ''} />
+                      <Textarea
+                        placeholder="Leave at reception…"
+                        {...field}
+                        value={field.value ?? ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -240,7 +299,12 @@ export function Step2Parties({
                     <FormItem>
                       <FormLabel>Currency</FormLabel>
                       <FormControl>
-                        <Input placeholder="USD" maxLength={3} {...field} value={field.value ?? ''} />
+                        <Input
+                          placeholder="USD"
+                          maxLength={3}
+                          {...field}
+                          value={field.value ?? ''}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -292,24 +356,35 @@ export function Step2Parties({
 
         <ItemsCard packages={packages} />
 
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Button type="button" variant="ghost" onClick={onBack} disabled={submitting}>
-            Back
-          </Button>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => submit('later')}
-              disabled={submitting}
-            >
-              Save &amp; finish later
+        {layout === 'edit' ? (
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Button type="button" variant="ghost" onClick={onBack} disabled={submitting}>
+              Cancel
             </Button>
             <Button type="button" onClick={() => submit('continue')} loading={submitting}>
-              Save &amp; continue
+              Save changes
             </Button>
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Button type="button" variant="ghost" onClick={onBack} disabled={submitting}>
+              Back
+            </Button>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => submit('later')}
+                disabled={submitting}
+              >
+                Save &amp; finish later
+              </Button>
+              <Button type="button" onClick={() => submit('continue')} loading={submitting}>
+                Save &amp; continue
+              </Button>
+            </div>
+          </div>
+        )}
       </form>
     </Form>
   )

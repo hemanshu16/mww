@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCountries, useUpdateCountry } from '@/hooks/useCountries'
+import { useStaffAuth } from '@/admin/staffAuthContext'
 import { getApiErrorMessage } from '@/lib/api/client'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -23,7 +24,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { PageHeader } from '@/components/ui/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,11 +67,12 @@ function matchesSearch(c: Country, q: string) {
   )
 }
 
-function VisibilitySwitch({ country }: { country: Country }) {
+function VisibilitySwitch({ country, disabled }: { country: Country; disabled?: boolean }) {
   const update = useUpdateCountry()
   return (
     <Switch
       checked={country.isVisible}
+      disabled={disabled}
       aria-label={`Show ${country.name} to customers`}
       onCheckedChange={(isVisible) =>
         update.mutate(
@@ -71,9 +80,12 @@ function VisibilitySwitch({ country }: { country: Country }) {
           {
             onSuccess: () =>
               toast.success(
-                isVisible ? `${country.name} is now shown to customers.` : `${country.name} is now hidden.`,
+                isVisible
+                  ? `${country.name} is now shown to customers.`
+                  : `${country.name} is now hidden.`,
               ),
-            onError: (error) => toast.error(getApiErrorMessage(error, 'Could not change visibility.')),
+            onError: (error) =>
+              toast.error(getApiErrorMessage(error, 'Could not change visibility.')),
           },
         )
       }
@@ -91,6 +103,10 @@ export default function CountriesPage() {
   const page = Math.max(1, Number(params.get('page') ?? '1') || 1)
 
   const { data: countries = [], isLoading, isError, error, refetch, isFetching } = useCountries()
+  const { can } = useStaffAuth()
+  const canCreate = can('country.create')
+  const canEdit = can('country.update')
+  const canDelete = can('country.delete')
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Country | null>(null)
@@ -142,17 +158,18 @@ export default function CountriesPage() {
     setFormOpen(true)
   }
 
-
   return (
     <div className="space-y-6">
       <PageHeader
         title="Countries"
         description="Choose which destinations customers can book, and how each one is priced."
         actions={
-          <Button onClick={openCreate} disabled={isError}>
-            <Plus className="size-4" />
-            Add country
-          </Button>
+          canCreate && (
+            <Button onClick={openCreate} disabled={isError}>
+              <Plus className="size-4" />
+              Add country
+            </Button>
+          )
         }
       />
 
@@ -272,10 +289,18 @@ export default function CountriesPage() {
                       <Skeleton className="h-4 w-32" />
                     </div>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
-                  <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
-                  <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-10 rounded-full" /></TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-10 rounded-full" />
+                  </TableCell>
                   <TableCell />
                 </TableRow>
               ))
@@ -315,10 +340,12 @@ export default function CountriesPage() {
                       title="No countries yet"
                       description="Add the first destination customers can ship to."
                       action={
-                        <Button onClick={openCreate}>
-                          <Plus className="size-4" />
-                          Add country
-                        </Button>
+                        canCreate && (
+                          <Button onClick={openCreate}>
+                            <Plus className="size-4" />
+                            Add country
+                          </Button>
+                        )
                       }
                     />
                   )}
@@ -335,16 +362,27 @@ export default function CountriesPage() {
                         className={cn(!c.isVisible && 'opacity-50 grayscale')}
                       />
                       <div className="min-w-0">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(c)}
-                          className={cn(
-                            'block max-w-[220px] truncate text-left text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none',
-                            c.isVisible ? 'text-foreground' : 'text-muted-foreground',
-                          )}
-                        >
-                          {c.name}
-                        </button>
+                        {canEdit ? (
+                          <button
+                            type="button"
+                            onClick={() => openEdit(c)}
+                            className={cn(
+                              'block max-w-[220px] truncate text-left text-sm font-medium hover:underline focus-visible:underline focus-visible:outline-none',
+                              c.isVisible ? 'text-foreground' : 'text-muted-foreground',
+                            )}
+                          >
+                            {c.name}
+                          </button>
+                        ) : (
+                          <span
+                            className={cn(
+                              'block max-w-[220px] truncate text-sm font-medium',
+                              c.isVisible ? 'text-foreground' : 'text-muted-foreground',
+                            )}
+                          >
+                            {c.name}
+                          </span>
+                        )}
                         {c.subregion && (
                           <span className="hidden max-w-[220px] truncate text-xs text-muted-foreground sm:block">
                             {c.subregion}
@@ -371,30 +409,41 @@ export default function CountriesPage() {
                     {c.isZipcodeLevelRates ? 'By zip code' : 'One country rate'}
                   </TableCell>
                   <TableCell>
-                    <VisibilitySwitch country={c} />
+                    <VisibilitySwitch country={c} disabled={!canEdit} />
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8" aria-label={`Actions for ${c.name}`}>
-                          <MoreHorizontal className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEdit(c)}>
-                          <Pencil className="size-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => setDeleting(c)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="size-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {(canEdit || canDelete) && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            aria-label={`Actions for ${c.name}`}
+                          >
+                            <MoreHorizontal className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {canEdit && (
+                            <DropdownMenuItem onClick={() => openEdit(c)}>
+                              <Pencil className="size-4" />
+                              Edit
+                            </DropdownMenuItem>
+                          )}
+                          {canEdit && canDelete && <DropdownMenuSeparator />}
+                          {canDelete && (
+                            <DropdownMenuItem
+                              onClick={() => setDeleting(c)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="size-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -438,7 +487,12 @@ export default function CountriesPage() {
         )}
       </Card>
 
-      <CountryFormDialog open={formOpen} onOpenChange={setFormOpen} country={editing} regions={regions} />
+      <CountryFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        country={editing}
+        regions={regions}
+      />
       <DeleteCountryDialog country={deleting} onOpenChange={(open) => !open && setDeleting(null)} />
     </div>
   )

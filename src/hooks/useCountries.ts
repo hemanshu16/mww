@@ -23,8 +23,9 @@ export function useCountries() {
 }
 
 /** Countries customers can ship to (booking wizard). */
-export function useBookableCountries() {
+export function useBookableCountries(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: queryKeys.bookableCountries,
     queryFn: listBookableCountries,
     select: (data) => data.items,

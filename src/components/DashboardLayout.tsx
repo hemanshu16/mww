@@ -10,9 +10,11 @@ import {
   X,
   ChevronDown,
   Search,
-  Earth,
+  Wallet,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useWallet } from '@/hooks/useWallet'
+import { formatINR } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -33,12 +35,9 @@ const NAV_SECTIONS = [
       { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
       { to: '/dashboard/bookings', label: 'Bookings', icon: Package, end: false },
       { to: '/dashboard/bookings/new', label: 'New Booking', icon: PlusCircle, end: false },
+      { to: '/dashboard/payments', label: 'Payments', icon: Wallet, end: false },
       { to: '/dashboard/profile', label: 'Profile', icon: User, end: false },
     ],
-  },
-  {
-    label: 'Admin',
-    items: [{ to: '/dashboard/countries', label: 'Manage Countries', icon: Earth, end: false }],
   },
 ]
 
@@ -109,6 +108,7 @@ function SidebarBrand() {
 
 export function DashboardLayout() {
   const { profile, signOut } = useAuth()
+  const wallet = useWallet()
   const navigate = useNavigate()
   const location = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -182,6 +182,21 @@ export function DashboardLayout() {
           </div>
 
           <div className="ml-auto flex items-center gap-3">
+            {wallet.data && (
+              <NavLink
+                to="/dashboard/payments"
+                title="Available to book"
+                className={cn(
+                  'hidden items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold tabular-nums transition-colors md:inline-flex',
+                  wallet.data.availableBalance > 0
+                    ? 'border-[#a7f3d0] bg-[#ecfdf5] text-[#047857] hover:bg-[#d1fae5]'
+                    : 'border-[#fecaca] bg-[#fef2f2] text-[#b91c1c] hover:bg-[#fee2e2]',
+                )}
+              >
+                <Wallet className="size-3.5" />
+                {formatINR(wallet.data.availableBalance)}
+              </NavLink>
+            )}
             {profile?.isGstBilling && (
               <Badge variant="booked" className="hidden sm:inline-flex">
                 GST billing
@@ -209,7 +224,9 @@ export function DashboardLayout() {
                   <span className="block font-semibold">
                     {profile?.firstName} {profile?.lastName}
                   </span>
-                  <span className="block truncate text-xs text-muted-foreground">{profile?.email}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {profile?.email}
+                  </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/dashboard/profile')}>

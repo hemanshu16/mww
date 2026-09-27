@@ -1,7 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { KycDocLink } from '@/components/booking/KycDocLink'
-import { formatDate, formatDimensions, formatWeight } from '@/lib/format'
+import { formatDate, formatDimensions, formatINR, formatWeight } from '@/lib/format'
 import {
   INVOICE_TYPE_LABELS,
   KYC_TYPE_LABELS,
@@ -26,15 +33,15 @@ function AddressBlock({ party }: { party: Shipper | Consignee }) {
     <div className="space-y-3">
       <div>
         <p className="font-medium">{party.fullName}</p>
-        {party.attention && <p className="text-sm text-muted-foreground">Attn: {party.attention}</p>}
+        {party.attention && (
+          <p className="text-sm text-muted-foreground">Attn: {party.attention}</p>
+        )}
       </div>
       <div className="text-sm">
         {lines.map((l, i) => (
           <p key={i}>{l}</p>
         ))}
-        <p>
-          {[party.city, party.state, party.zipCode].filter(Boolean).join(', ')}
-        </p>
+        <p>{[party.city, party.state, party.zipCode].filter(Boolean).join(', ')}</p>
         <p className="font-medium">{party.country}</p>
       </div>
       <dl className="grid grid-cols-2 gap-3">
@@ -47,8 +54,19 @@ function AddressBlock({ party }: { party: Shipper | Consignee }) {
   )
 }
 
-export function BookingRecap({ booking }: { booking: Booking }) {
+export function BookingRecap({
+  booking,
+  kycFiles = true,
+  showItems = false,
+}: {
+  booking: Booking
+  /** Preview KYC files (customer only; staff can't open them). */
+  kycFiles?: boolean
+  showItems?: boolean
+}) {
   const { shipper, consignee, invoice, packages, summary } = booking
+  const price = booking.price ?? booking.totalPrice ?? null
+  const items = [...(booking.items ?? [])].sort((a, b) => a.boxNumber - b.boxNumber)
 
   return (
     <div className="space-y-6">
@@ -58,9 +76,10 @@ export function BookingRecap({ booking }: { booking: Booking }) {
           <CardTitle>Shipment</CardTitle>
         </CardHeader>
         <CardContent>
-          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             <Field label="Type" value={SHIPMENT_TYPE_LABELS[booking.shipmentType]} />
             <Field label="Shipment date" value={formatDate(booking.shipmentDate)} />
+            <Field label="Price" value={price != null ? formatINR(price) : null} />
             <Field label="Reference" value={booking.referenceNumber} />
             <Field label="Remarks" value={booking.remarks} />
           </dl>
@@ -91,8 +110,12 @@ export function BookingRecap({ booking }: { booking: Booking }) {
                     {formatDimensions(p.lengthCm, p.widthCm, p.heightCm)}
                     <span className="ml-1 text-xs">(÷{p.volumetricDivisor})</span>
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{formatWeight(p.actualWeight)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatWeight(p.volumetricWeight)}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatWeight(p.actualWeight)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatWeight(p.volumetricWeight)}
+                  </TableCell>
                   <TableCell className="text-right font-semibold tabular-nums">
                     {formatWeight(p.chargeableWeight)}
                   </TableCell>
@@ -105,19 +128,74 @@ export function BookingRecap({ booking }: { booking: Booking }) {
               Boxes: <span className="font-semibold text-foreground">{summary.boxCount}</span>
             </span>
             <span className="text-muted-foreground">
-              Actual: <span className="font-semibold text-foreground">{formatWeight(summary.totalActualWeight)}</span>
+              Actual:{' '}
+              <span className="font-semibold text-foreground">
+                {formatWeight(summary.totalActualWeight)}
+              </span>
             </span>
             <span className="text-muted-foreground">
               Volumetric:{' '}
-              <span className="font-semibold text-foreground">{formatWeight(summary.totalVolumetricWeight)}</span>
+              <span className="font-semibold text-foreground">
+                {formatWeight(summary.totalVolumetricWeight)}
+              </span>
             </span>
             <span className="text-muted-foreground">
               Chargeable:{' '}
-              <span className="font-semibold text-primary">{formatWeight(summary.totalChargeableWeight)}</span>
+              <span className="font-semibold text-primary">
+                {formatWeight(summary.totalChargeableWeight)}
+              </span>
             </span>
           </div>
         </CardContent>
       </Card>
+
+      {showItems && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Items</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {items.length === 0 ? (
+              <p className="px-6 pb-6 text-sm text-muted-foreground">No items declared.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>Box</TableHead>
+                    <TableHead>Item</TableHead>
+                    <TableHead className="hidden sm:table-cell">HSN</TableHead>
+                    <TableHead className="text-right">Qty</TableHead>
+                    <TableHead className="text-right">
+                      Unit price{invoice?.currency ? ` (${invoice.currency})` : ''}
+                    </TableHead>
+                    <TableHead className="hidden text-right md:table-cell">Weight</TableHead>
+                    <TableHead className="hidden md:table-cell">Priority</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((i) => (
+                    <TableRow key={i.id} className="hover:bg-transparent">
+                      <TableCell className="font-medium">{i.boxNumber}</TableCell>
+                      <TableCell className="text-sm">{i.name}</TableCell>
+                      <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">
+                        {i.hsnCode}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{i.quantity}</TableCell>
+                      <TableCell className="text-right tabular-nums">{i.price}</TableCell>
+                      <TableCell className="hidden text-right tabular-nums md:table-cell">
+                        {i.weight != null ? `${i.weight} g` : '—'}
+                      </TableCell>
+                      <TableCell className="hidden text-sm text-muted-foreground md:table-cell">
+                        {i.priority.charAt(0) + i.priority.slice(1).toLowerCase()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Parties */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -129,7 +207,10 @@ export function BookingRecap({ booking }: { booking: Booking }) {
             {shipper ? (
               <>
                 <AddressBlock party={shipper} />
-                {(shipper.kyc1Type || shipper.kyc2Type || shipper.kyc1DocFront || shipper.kyc2Doc) && (
+                {(shipper.kyc1Type ||
+                  shipper.kyc2Type ||
+                  shipper.kyc1DocFront ||
+                  shipper.kyc2Doc) && (
                   <div className="space-y-4 border-t border-border pt-4">
                     <h4 className="text-sm font-semibold">KYC documents</h4>
                     {(shipper.kyc1Type || shipper.kyc1Number) && (
@@ -141,10 +222,14 @@ export function BookingRecap({ booking }: { booking: Booking }) {
                           />
                           <Field label="KYC 1 number" value={shipper.kyc1Number} />
                         </dl>
-                        {(shipper.kyc1DocFront || shipper.kyc1DocBack) && (
+                        {kycFiles && (shipper.kyc1DocFront || shipper.kyc1DocBack) && (
                           <div className="mt-3 grid grid-cols-2 gap-3">
-                            {shipper.kyc1DocFront && <KycDocLink label="Front" path={shipper.kyc1DocFront} />}
-                            {shipper.kyc1DocBack && <KycDocLink label="Back" path={shipper.kyc1DocBack} />}
+                            {shipper.kyc1DocFront && (
+                              <KycDocLink label="Front" path={shipper.kyc1DocFront} />
+                            )}
+                            {shipper.kyc1DocBack && (
+                              <KycDocLink label="Back" path={shipper.kyc1DocBack} />
+                            )}
                           </div>
                         )}
                       </div>
@@ -158,7 +243,7 @@ export function BookingRecap({ booking }: { booking: Booking }) {
                           />
                           <Field label="KYC 2 number" value={shipper.kyc2Number} />
                         </dl>
-                        {shipper.kyc2Doc && (
+                        {kycFiles && shipper.kyc2Doc && (
                           <div className="mt-3 grid grid-cols-2 gap-3">
                             <KycDocLink label="Document" path={shipper.kyc2Doc} />
                           </div>

@@ -9,6 +9,7 @@ import { Step3Review } from '@/components/booking/Step3Review'
 import { Card, CardContent } from '@/components/ui/card'
 import { useCourierProviders } from '@/hooks/useCourierProviders'
 import {
+  isInsufficientBalanceError,
   useBooking,
   useCreateBooking,
   useSubmitBooking,
@@ -65,7 +66,11 @@ export default function BookingWizardPage() {
 
   const handleConflict = (error: unknown): boolean => {
     // 409 also covers item/box mismatches; only a status conflict means "not a draft".
-    if (error instanceof ApiRequestError && error.status === 409 && !/box|item/i.test(error.message)) {
+    if (
+      error instanceof ApiRequestError &&
+      error.status === 409 &&
+      !/box|item/i.test(error.message)
+    ) {
       toast.error('This booking can no longer be edited.')
       if (id) {
         bookingQuery.refetch()
@@ -117,6 +122,17 @@ export default function BookingWizardPage() {
       navigate(`/dashboard/bookings/${id}`)
     } catch (error) {
       if (handleConflict(error)) return
+      if (isInsufficientBalanceError(error)) {
+        // Booking stays DRAFT; keep the customer on the review step.
+        toast.error(error instanceof Error ? error.message : 'Insufficient wallet balance.', {
+          description: 'Add funds by bank transfer, or contact your Monarch account manager.',
+          action: {
+            label: 'View bank details',
+            onClick: () => navigate('/dashboard/payments?pay=1'),
+          },
+        })
+        return
+      }
       if (error instanceof ApiRequestError && error.status === 400) {
         toast.error(error.message)
         goStep(2)
@@ -165,6 +181,7 @@ export default function BookingWizardPage() {
           submitLabel={id ? 'Save & continue' : 'Continue'}
           onSubmit={onStep1}
           items={booking?.items}
+          lockDestination={!!id}
         />
       ) : !booking ? (
         <div className="flex items-center justify-center py-20">
