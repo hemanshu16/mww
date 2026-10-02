@@ -4,10 +4,9 @@ import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Highlight } from '@/components/booking/Highlight'
 import { POSTAL_MIN_CHARS, usePostalSearch } from '@/hooks/usePostalSearch'
-import type { PostalPlace } from '@/lib/api/postal'
+import { ApiRequestError } from '@/lib/api/client'
+import { POSTAL_RESULT_LIMIT, type PostalPlace } from '@/lib/api/postal'
 import { cn } from '@/lib/utils'
-
-const MAX_RESULTS = 50
 
 /**
  * Zip-code field with suggestions: type a city or part of a code and pick a
@@ -40,7 +39,7 @@ export function PostalCodeInput({
   const listId = useId()
 
   const search = usePostalSearch(countryCode, value, open)
-  const results = (search.data ?? []).slice(0, MAX_RESULTS)
+  const results = (search.data ?? []).slice(0, POSTAL_RESULT_LIMIT)
   const typed = value.trim()
 
   const pick = (p: PostalPlace) => {
@@ -69,7 +68,14 @@ export function PostalCodeInput({
   if (typed.length < POSTAL_MIN_CHARS) {
     body = <Hint>Type at least {POSTAL_MIN_CHARS} characters of a city or zip code.</Hint>
   } else if (search.isError) {
-    body = <Hint>Zip lookup isn&apos;t available right now. You can still type the zip code.</Hint>
+    const rateLimited = search.error instanceof ApiRequestError && search.error.status === 429
+    body = (
+      <Hint>
+        {rateLimited
+          ? 'Too many searches. Wait a minute, or type the zip code yourself.'
+          : 'Zip lookup isn’t available right now. You can still type the zip code.'}
+      </Hint>
+    )
   } else if (search.pending && results.length === 0) {
     body = (
       <div className="space-y-1 p-1" aria-busy>

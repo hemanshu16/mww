@@ -18,23 +18,54 @@ export interface AdminNavItem {
   perm: string
 }
 
-export const ADMIN_NAV: AdminNavItem[] = [
-  { to: '/admin/customers', label: 'Customers', icon: Contact, perm: 'customer.read' },
-  { to: '/admin/bookings', label: 'Bookings', icon: Package, perm: 'booking.read' },
+export interface AdminNavGroup {
+  label: string
+  items: AdminNavItem[]
+}
+
+export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
-    to: '/admin/courier-providers',
-    label: 'Courier providers',
-    icon: Truck,
-    perm: 'courier_provider.read',
+    label: 'Operations',
+    items: [
+      { to: '/admin/customers', label: 'Customers', icon: Contact, perm: 'customer.read' },
+      { to: '/admin/bookings', label: 'Bookings', icon: Package, perm: 'booking.read' },
+      {
+        to: '/admin/courier-providers',
+        label: 'Courier providers',
+        icon: Truck,
+        perm: 'courier_provider.read',
+      },
+      { to: '/admin/countries', label: 'Countries', icon: Earth, perm: 'country.read' },
+    ],
   },
-  { to: '/admin/countries', label: 'Countries', icon: Earth, perm: 'country.read' },
-  { to: '/admin/staff', label: 'Staff', icon: Users, perm: 'staff.read' },
-  { to: '/admin/roles', label: 'Roles', icon: KeyRound, perm: 'role.read' },
   {
-    to: '/admin/company-settings',
-    label: 'Company settings',
-    icon: Building2,
-    perm: 'company_settings.read',
+    label: 'Access & team',
+    items: [
+      { to: '/admin/staff', label: 'Staff', icon: Users, perm: 'staff.read' },
+      { to: '/admin/roles', label: 'Roles', icon: KeyRound, perm: 'role.read' },
+    ],
   },
-  { to: '/admin/activity-log', label: 'Activity log', icon: History, perm: 'audit_log.read' },
+  {
+    label: 'Configuration',
+    items: [
+      {
+        to: '/admin/company-settings',
+        label: 'Company settings',
+        icon: Building2,
+        perm: 'company_settings.read',
+      },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { to: '/admin/activity-log', label: 'Activity log', icon: History, perm: 'audit_log.read' },
+    ],
+  },
 ]
+
+/** Flat list in menu order (e.g. to find the first page a user can open). */
+export const ADMIN_NAV: AdminNavItem[] = ADMIN_NAV_GROUPS.flatMap((g) => g.items)
+
+/** Where staff get help. */
+export const SUPPORT_EMAIL = 'cs.monarchwwe@gmail.com'

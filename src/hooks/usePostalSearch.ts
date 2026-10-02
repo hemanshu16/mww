@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { ApiRequestError } from '@/lib/api/client'
 import { searchPostalCodes } from '@/lib/api/postal'
 import { queryKeys } from '@/lib/queryKeys'
 
@@ -23,7 +24,9 @@ export function usePostalSearch(country: string, query: string, enabled = true) 
     queryFn: ({ signal }) => searchPostalCodes(country, q, signal),
     enabled: active,
     staleTime: 60 * 60 * 1000,
-    retry: 1,
+    // The API answered (bad input, rate limit, lookup down): retrying won't help.
+    // Only retry once on network failures.
+    retry: (count, error) => count < 1 && !(error instanceof ApiRequestError),
   })
   // True while the user is still typing ahead of the debounce.
   const pending = active ? result.isFetching || q !== query.trim() : false

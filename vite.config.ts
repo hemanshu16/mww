@@ -11,15 +11,4 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
-  server: {
-    // countries.dev sends no CORS headers, so the browser can't call it directly.
-    // In production, serve the same path from a reverse proxy or the backend.
-    proxy: {
-      '/postal-api': {
-        target: 'https://countries.dev',
-        changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/postal-api/, '/api'),
-      },
-    },
-  },
 })
