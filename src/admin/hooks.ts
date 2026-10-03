@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addWalletTransaction,
   cancelAdminBooking,
+  createCustomer,
   createBankAccount,
   createCourierProvider,
   createRole,
@@ -52,6 +53,7 @@ import type {
   AdminCourierProvider,
   AdminKycInput,
   Concurrency,
+  CreateCustomerInput,
   Customer,
   UpdateCustomerInput,
   BankAccountInput,
@@ -366,6 +368,14 @@ function useCustomerCacheWriter() {
     qc.invalidateQueries({ queryKey: adminKeys.customersRoot })
     qc.invalidateQueries({ queryKey: adminKeys.activityRoot })
   }
+}
+
+export function useCreateCustomer() {
+  const write = useCustomerCacheWriter()
+  return useMutation({
+    mutationFn: (input: CreateCustomerInput) => createCustomer(input),
+    onSuccess: write,
+  })
 }
 
 export function useUpdateCustomer(id: string) {

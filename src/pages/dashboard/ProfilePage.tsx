@@ -18,7 +18,6 @@ import { cn } from '@/lib/utils'
 const profileSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  companyName: z.string().min(1, 'Company name is required'),
 })
 type ProfileValues = z.infer<typeof profileSchema>
 
@@ -41,7 +40,6 @@ function ProfileForm() {
     values: {
       firstName: profile?.firstName ?? '',
       lastName: profile?.lastName ?? '',
-      companyName: profile?.companyName ?? '',
     },
   })
 
@@ -65,7 +63,7 @@ function ProfileForm() {
     <Card>
       <CardHeader>
         <CardTitle>Profile details</CardTitle>
-        <CardDescription>Update your name and company information.</CardDescription>
+        <CardDescription>Update your name. To change your company, email or phone, contact us.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -98,20 +96,12 @@ function ProfileForm() {
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="companyName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Company name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Managed by staff; shown read-only like email and phone. */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <FormLabel className="text-muted-foreground">Company name</FormLabel>
+                <p className="mt-1.5 text-sm">{profile?.companyName}</p>
+              </div>
               <div>
                 <FormLabel className="text-muted-foreground">Email</FormLabel>
                 <p className="mt-1.5 text-sm">{profile?.email}</p>

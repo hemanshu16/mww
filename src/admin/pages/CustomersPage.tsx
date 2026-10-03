@@ -1,12 +1,16 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users } from 'lucide-react'
+import { Plus, Users } from 'lucide-react'
 import { useCustomers } from '@/admin/hooks'
+import { useStaffAuth } from '@/admin/staffAuthContext'
+import { AddCustomerDialog } from '@/admin/components/customers/AddCustomerDialog'
 import { useUrlFilters } from '@/admin/useUrlFilters'
 import { DateRange, FilterChip, Pager, SearchBox } from '@/admin/components/ListControls'
 import type { ListCustomersParams } from '@/admin/api'
 import { formatDate, formatINR } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/ui/page-header'
@@ -42,6 +46,8 @@ const SORTS: Record<
 
 export default function CustomersPage() {
   const navigate = useNavigate()
+  const { can } = useStaffAuth()
+  const [addOpen, setAddOpen] = useState(false)
   const f = useUrlFilters()
   const sortKey = f.get('sort') in SORTS ? f.get('sort') : 'newest'
   const showInactive = f.get('inactive') === '1'
@@ -78,7 +84,14 @@ export default function CustomersPage() {
     <div className="space-y-6">
       <PageHeader
         title="Customers"
-        description="Every registered customer, with their wallet and bookings."
+        description="Every customer account, with their wallet and bookings."
+        actions={
+          can('customer.create') && (
+            <Button onClick={() => setAddOpen(true)}>
+              <Plus className="size-4" /> Add customer
+            </Button>
+          )
+        }
       />
 
       <Card className="overflow-hidden">
@@ -184,7 +197,7 @@ export default function CustomersPage() {
                     description={
                       filtered
                         ? 'Try other words or remove a filter. Every word must match.'
-                        : 'Customers appear here once they register.'
+                        : 'No customers yet.'
                     }
                   />
                 </TableCell>
@@ -255,6 +268,7 @@ export default function CustomersPage() {
           onPage={(p) => f.set({ page: String(p) })}
         />
       </Card>
+      <AddCustomerDialog open={addOpen} onOpenChange={setAddOpen} />
     </div>
   )
 }

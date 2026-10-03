@@ -19,6 +19,7 @@ import type {
   AuditEntityType,
   Concurrency,
   Customer,
+  CreateCustomerInput,
   CustomerList,
   LookupCountry,
   LookupProvider,
@@ -231,6 +232,11 @@ export function listCustomers(params: ListCustomersParams = {}) {
 
 export function getCustomer(id: string) {
   return apiClient.get<Customer>(`/admin/customers/${id}`)
+}
+
+/** Emails the sign-in details; 502 means the email failed and nothing was created. */
+export function createCustomer(input: CreateCustomerInput) {
+  return apiClient.post<Customer>('/admin/customers', input)
 }
 
 export function updateCustomer(id: string, input: UpdateCustomerInput) {

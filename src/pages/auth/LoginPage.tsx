@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,7 +7,14 @@ import { toast } from 'sonner'
 import { AuthLayout } from '@/components/AuthLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { useAuth } from '@/hooks/useAuth'
 import { login } from '@/lib/api/auth'
 import { ApiRequestError, getApiErrorMessage } from '@/lib/api/client'
@@ -62,13 +69,10 @@ export default function LoginPage() {
       footer={
         <>
           Don&apos;t have an account?{' '}
-          <Link to="/register" className="font-semibold text-primary hover:underline">
-            Create one
-          </Link>
-          <span className="mx-2 text-[#c3ccd8]">·</span>
-          <Link to="/admin/login" className="hover:text-foreground hover:underline">
-            Staff sign in
-          </Link>
+          <a href="/#contact" className="font-semibold text-primary hover:underline">
+            Contact us
+          </a>{' '}
+          to get one.
         </>
       }
     >
@@ -81,7 +85,12 @@ export default function LoginPage() {
               <FormItem>
                 <FormLabel required>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" autoComplete="email" placeholder="you@company.com" {...field} />
+                  <Input
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@company.com"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -97,7 +106,12 @@ export default function LoginPage() {
                   <span className="text-xs text-muted-foreground">Forgot?</span>
                 </div>
                 <FormControl>
-                  <Input type="password" autoComplete="current-password" placeholder="••••••••" {...field} />
+                  <Input
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

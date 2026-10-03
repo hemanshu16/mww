@@ -1,20 +1,6 @@
 import { apiClient } from '@/lib/api/client'
 import type { AuthSession, TokenPair } from '@/lib/types'
 
-export interface RegisterInput {
-  firstName: string
-  lastName: string
-  companyName: string
-  phoneNumber: string
-  email: string
-  password: string
-  isGstBilling: boolean
-}
-
-export function register(input: RegisterInput) {
-  return apiClient.post<{ email: string }>('/auth/register', input, { auth: false })
-}
-
 export function verifyEmail(email: string, code: string) {
   return apiClient.post<AuthSession>('/auth/verify-email', { email, code }, { auth: false })
 }

@@ -8,7 +8,6 @@ export function getMe() {
 export interface UpdateProfileInput {
   firstName?: string
   lastName?: string
-  companyName?: string
   currentPassword?: string
   newPassword?: string
 }

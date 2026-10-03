@@ -29,6 +29,7 @@ export const AUDIT_ACTIONS: { group: string; actions: string[] }[] = [
   {
     group: 'Customers',
     actions: [
+      'customer.create',
       'customer.update',
       'customer.activate',
       'customer.deactivate',

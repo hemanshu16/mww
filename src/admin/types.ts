@@ -250,6 +250,17 @@ export interface CustomerList {
   pagination: Pagination
 }
 
+export interface CreateCustomerInput {
+  firstName: string
+  lastName: string
+  companyName: string
+  phoneNumber: string
+  email: string
+  isGstBilling: boolean
+  /** Omit to have the server generate one. */
+  password?: string
+}
+
 export type UpdateCustomerInput = Partial<{
   firstName: string
   lastName: string
