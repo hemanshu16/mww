@@ -127,6 +127,10 @@ export interface BookingItem {
   hsnCode: string
   /** Grams. */
   weight: number | null
+  /** Unit of measurement: a code from the UOM list (e.g. PCS) or free text. */
+  uom: string | null
+  /** IGST rate, percent. */
+  igst: number | null
 }
 
 export interface ItemInput {
@@ -138,6 +142,9 @@ export interface ItemInput {
   hsnCode: string
   /** Grams. */
   weight?: number
+  uom?: string
+  /** Percent. */
+  igst?: number
 }
 
 export interface BookingSummary {

@@ -57,6 +57,12 @@ export function formatDimensions(l: number, w: number, h: number): string {
   return `${l} × ${w} × ${h} cm`
 }
 
+/** Trailing file name of a KYC storage path like kyc/<id>/<uuid>-name.jpg. */
+export function kycFileName(path: string): string {
+  const base = path.split('/').pop() ?? path
+  return base.replace(/^[0-9a-f-]{8,}-/i, '')
+}
+
 export function titleCase(value: string): string {
   return value
     .toLowerCase()

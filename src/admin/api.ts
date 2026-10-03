@@ -1,6 +1,8 @@
 import { apiClient } from '@/lib/api/client'
 import type {
   BookingStatus,
+  KycDownloadUrl,
+  KycUploadUrl,
   PartiesInput,
   ShipmentType,
   UpdateBookingInput,
@@ -13,6 +15,7 @@ import type {
   AddWalletTransactionInput,
   AdminBookingDetail,
   AdminBookingList,
+  AdminKycInput,
   AuditEntityType,
   Concurrency,
   Customer,
@@ -287,6 +290,25 @@ export function cancelAdminBooking(id: string, input: { reason?: string } & Conc
 
 export function deleteAdminBooking(id: string) {
   return apiClient.delete<Record<string, never>>(`/admin/bookings/${id}`)
+}
+
+// Shipper KYC. Files go to the booking customer's KYC folder.
+
+/** Logged as `booking.kyc.view`; the URL expires, so ask on each view. */
+export function requestAdminKycDownloadUrl(id: string, path: string) {
+  return apiClient.post<KycDownloadUrl>(`/admin/bookings/${id}/kyc/download-url`, { path })
+}
+
+export function requestAdminKycUploadUrl(id: string, fileName: string, contentType?: string) {
+  return apiClient.post<KycUploadUrl>(`/admin/bookings/${id}/kyc/upload-url`, {
+    fileName,
+    contentType,
+  })
+}
+
+/** Only the fields sent change; `null` clears one. */
+export function updateAdminBookingKyc(id: string, input: AdminKycInput & Concurrency) {
+  return apiClient.patch<AdminBookingDetail>(`/admin/bookings/${id}/kyc`, input)
 }
 
 // --- activity log -----------------------------------------------------------

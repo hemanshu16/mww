@@ -3,6 +3,7 @@ import type {
   BookingStatus,
   Pagination,
   ShipmentType,
+  ShipperInput,
   WalletSummary,
   WalletTransaction,
 } from '@/lib/types'
@@ -302,6 +303,20 @@ export interface AdminBookingDetail extends Booking {
   /** Oldest first. */
   walletTransactions: WalletTransaction[]
 }
+
+/** PATCH /admin/bookings/:id/kyc. Send only what changes; `null` clears. */
+export type AdminKycInput = Partial<
+  Pick<
+    ShipperInput,
+    | 'kyc1Type'
+    | 'kyc1Number'
+    | 'kyc1DocFront'
+    | 'kyc1DocBack'
+    | 'kyc2Type'
+    | 'kyc2Number'
+    | 'kyc2Doc'
+  >
+>
 
 /** Optimistic-concurrency token: the `updatedAt` the edit was based on. */
 export interface Concurrency {

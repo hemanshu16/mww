@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
@@ -8,6 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { KycDocLink } from '@/components/booking/KycDocLink'
+import { uomLabel } from '@/data/uom'
 import { formatDate, formatDimensions, formatINR, formatWeight } from '@/lib/format'
 import {
   INVOICE_TYPE_LABELS,
@@ -56,12 +58,12 @@ function AddressBlock({ party }: { party: Shipper | Consignee }) {
 
 export function BookingRecap({
   booking,
-  kycFiles = true,
+  shipperKyc,
   showItems = false,
 }: {
   booking: Booking
-  /** Preview KYC files (customer only; staff can't open them). */
-  kycFiles?: boolean
+  /** Replaces the read-only KYC block in the shipper card (admin's editable one). */
+  shipperKyc?: ReactNode
   showItems?: boolean
 }) {
   const { shipper, consignee, invoice, packages, summary } = booking
@@ -165,23 +167,34 @@ export function BookingRecap({
                     <TableHead>Item</TableHead>
                     <TableHead className="hidden sm:table-cell">HSN</TableHead>
                     <TableHead className="text-right">Qty</TableHead>
+                    <TableHead>UOM</TableHead>
                     <TableHead className="text-right">
                       Unit price{invoice?.currency ? ` (${invoice.currency})` : ''}
                     </TableHead>
+                    <TableHead className="hidden text-right sm:table-cell">IGST</TableHead>
                     <TableHead className="hidden text-right md:table-cell">Weight</TableHead>
                     <TableHead className="hidden md:table-cell">Priority</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.map((i) => (
-                    <TableRow key={i.id} className="hover:bg-transparent">
+                    <TableRow key={i.lineNumber} className="hover:bg-transparent">
                       <TableCell className="font-medium">{i.boxNumber}</TableCell>
                       <TableCell className="text-sm">{i.name}</TableCell>
                       <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">
                         {i.hsnCode}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{i.quantity}</TableCell>
+                      <TableCell
+                        className="text-sm text-muted-foreground"
+                        title={i.uom ? uomLabel(i.uom) : undefined}
+                      >
+                        {i.uom || '—'}
+                      </TableCell>
                       <TableCell className="text-right tabular-nums">{i.price}</TableCell>
+                      <TableCell className="hidden text-right tabular-nums sm:table-cell">
+                        {i.igst != null ? `${i.igst}%` : '—'}
+                      </TableCell>
                       <TableCell className="hidden text-right tabular-nums md:table-cell">
                         {i.weight != null ? `${i.weight} g` : '—'}
                       </TableCell>
@@ -207,51 +220,52 @@ export function BookingRecap({
             {shipper ? (
               <>
                 <AddressBlock party={shipper} />
-                {(shipper.kyc1Type ||
-                  shipper.kyc2Type ||
-                  shipper.kyc1DocFront ||
-                  shipper.kyc2Doc) && (
-                  <div className="space-y-4 border-t border-border pt-4">
-                    <h4 className="text-sm font-semibold">KYC documents</h4>
-                    {(shipper.kyc1Type || shipper.kyc1Number) && (
-                      <div>
-                        <dl className="grid grid-cols-2 gap-3">
-                          <Field
-                            label="KYC 1 type"
-                            value={shipper.kyc1Type ? KYC_TYPE_LABELS[shipper.kyc1Type] : null}
-                          />
-                          <Field label="KYC 1 number" value={shipper.kyc1Number} />
-                        </dl>
-                        {kycFiles && (shipper.kyc1DocFront || shipper.kyc1DocBack) && (
-                          <div className="mt-3 grid grid-cols-2 gap-3">
-                            {shipper.kyc1DocFront && (
-                              <KycDocLink label="Front" path={shipper.kyc1DocFront} />
-                            )}
-                            {shipper.kyc1DocBack && (
-                              <KycDocLink label="Back" path={shipper.kyc1DocBack} />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {(shipper.kyc2Type || shipper.kyc2Number) && (
-                      <div>
-                        <dl className="grid grid-cols-2 gap-3">
-                          <Field
-                            label="KYC 2 type"
-                            value={shipper.kyc2Type ? KYC_TYPE_LABELS[shipper.kyc2Type] : null}
-                          />
-                          <Field label="KYC 2 number" value={shipper.kyc2Number} />
-                        </dl>
-                        {kycFiles && shipper.kyc2Doc && (
-                          <div className="mt-3 grid grid-cols-2 gap-3">
-                            <KycDocLink label="Document" path={shipper.kyc2Doc} />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                {shipperKyc ??
+                  ((shipper.kyc1Type ||
+                    shipper.kyc2Type ||
+                    shipper.kyc1DocFront ||
+                    shipper.kyc2Doc) && (
+                    <div className="space-y-4 border-t border-border pt-4">
+                      <h4 className="text-sm font-semibold">KYC documents</h4>
+                      {(shipper.kyc1Type || shipper.kyc1Number) && (
+                        <div>
+                          <dl className="grid grid-cols-2 gap-3">
+                            <Field
+                              label="KYC 1 type"
+                              value={shipper.kyc1Type ? KYC_TYPE_LABELS[shipper.kyc1Type] : null}
+                            />
+                            <Field label="KYC 1 number" value={shipper.kyc1Number} />
+                          </dl>
+                          {(shipper.kyc1DocFront || shipper.kyc1DocBack) && (
+                            <div className="mt-3 grid grid-cols-2 gap-3">
+                              {shipper.kyc1DocFront && (
+                                <KycDocLink label="Front" path={shipper.kyc1DocFront} />
+                              )}
+                              {shipper.kyc1DocBack && (
+                                <KycDocLink label="Back" path={shipper.kyc1DocBack} />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {(shipper.kyc2Type || shipper.kyc2Number) && (
+                        <div>
+                          <dl className="grid grid-cols-2 gap-3">
+                            <Field
+                              label="KYC 2 type"
+                              value={shipper.kyc2Type ? KYC_TYPE_LABELS[shipper.kyc2Type] : null}
+                            />
+                            <Field label="KYC 2 number" value={shipper.kyc2Number} />
+                          </dl>
+                          {shipper.kyc2Doc && (
+                            <div className="mt-3 grid grid-cols-2 gap-3">
+                              <KycDocLink label="Document" path={shipper.kyc2Doc} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
               </>
             ) : (
               <p className="text-sm text-muted-foreground">Not provided yet.</p>

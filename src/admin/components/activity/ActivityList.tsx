@@ -6,7 +6,7 @@ import { useActivityLogs } from '@/admin/hooks'
 import { Pager } from '@/admin/components/ListControls'
 import { ENTITY_LABELS, ENTITY_PAGES } from '@/admin/components/activity/activityMeta'
 import type { ActivityLogEntry, AuditEntityType } from '@/admin/types'
-import { formatDateTime } from '@/lib/format'
+import { formatDateTime, kycFileName } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Pagination } from '@/lib/types'
 import { Card } from '@/components/ui/card'
@@ -18,17 +18,86 @@ function formatValue(v: unknown): string {
   if (Array.isArray(v)) return v.length ? v.map(formatValue).join(', ') : '(none)'
   if (typeof v === 'boolean') return v ? 'Yes' : 'No'
   if (typeof v === 'object') return JSON.stringify(v)
+  // KYC storage paths: the file name is what matters.
+  if (typeof v === 'string' && v.startsWith('kyc/')) return kycFileName(v)
   return String(v)
 }
 
-/** "shipper.city" → "Shipper city", "isActive" → "Is active". */
+/** Field names that don't read well split on camelCase. */
+const FIELD_LABELS: Record<string, string> = {
+  hsnCode: 'HSN code',
+  uom: 'UOM',
+  igst: 'IGST',
+  boxNumber: 'Box',
+  kyc1Type: 'KYC 1 type',
+  kyc1Number: 'KYC 1 number',
+  kyc1DocFront: 'KYC 1 front',
+  kyc1DocBack: 'KYC 1 back',
+  kyc2Type: 'KYC 2 type',
+  kyc2Number: 'KYC 2 number',
+  kyc2Doc: 'KYC 2 document',
+  path: 'Document',
+}
+
+/** "shipper.city" → "Shipper city", "isActive" → "Is active", "items[2].igst" → "Item 2 · IGST". */
 function fieldLabel(key: string): string {
+  const item = /^items\[(\d+)\]\.(\w+)$/.exec(key)
+  if (item) return `Item ${item[1]} · ${fieldLabel(item[2])}`
   const words = key
     .split('.')
+    .map((part) => FIELD_LABELS[part] ?? part.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase())
     .join(' ')
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .toLowerCase()
   return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
+/** A whole item line in an `items[N]` diff (added or removed). */
+type ItemSnapshot = Record<string, unknown> & { name?: string; quantity?: number; price?: number }
+
+function ItemValue({ item }: { item: ItemSnapshot }) {
+  const rest = Object.entries(item).filter(([k]) => !['name', 'quantity', 'price'].includes(k))
+  return (
+    <details>
+      <summary className="cursor-pointer">
+        {item.name ?? 'Item'} · {item.quantity ?? '—'} × {item.price ?? '—'}
+      </summary>
+      <dl className="mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs font-normal text-muted-foreground">
+        {rest.map(([k, v]) => (
+          <div key={k} className="contents">
+            <dt>{fieldLabel(k)}</dt>
+            <dd className="text-foreground">{formatValue(v)}</dd>
+          </div>
+        ))}
+      </dl>
+    </details>
+  )
+}
+
+function ChangeRow({ field, from, to }: { field: string; from: unknown; to: unknown }) {
+  const line = /^items\[(\d+)\]$/.exec(field)
+  if (line) {
+    const added = from == null
+    const item = (added ? to : from) as ItemSnapshot
+    return (
+      <tr>
+        <td className="px-3 py-2 text-muted-foreground">
+          Item {line[1]} {added ? 'added' : 'removed'}
+        </td>
+        <td className="px-3 py-2 text-[#b91c1c]">{added ? '—' : <ItemValue item={item} />}</td>
+        <td className="px-3 py-2 font-medium text-[#047857]">
+          {added ? <ItemValue item={item} /> : '—'}
+        </td>
+      </tr>
+    )
+  }
+  return (
+    <tr>
+      <td className="px-3 py-2 text-muted-foreground">{fieldLabel(field)}</td>
+      <td className="px-3 py-2 text-[#b91c1c] line-through decoration-[#fca5a5]">
+        {formatValue(from)}
+      </td>
+      <td className="px-3 py-2 font-medium text-[#047857]">{formatValue(to)}</td>
+    </tr>
+  )
 }
 
 function Entry({ entry, showRecord }: { entry: ActivityLogEntry; showRecord: boolean }) {
@@ -92,13 +161,7 @@ function Entry({ entry, showRecord }: { entry: ActivityLogEntry; showRecord: boo
             </thead>
             <tbody className="divide-y divide-border">
               {changes.map(([key, c]) => (
-                <tr key={key}>
-                  <td className="px-3 py-2 text-muted-foreground">{fieldLabel(key)}</td>
-                  <td className="px-3 py-2 text-[#b91c1c] line-through decoration-[#fca5a5]">
-                    {formatValue(c.from)}
-                  </td>
-                  <td className="px-3 py-2 font-medium text-[#047857]">{formatValue(c.to)}</td>
-                </tr>
+                <ChangeRow key={key} field={key} from={c.from} to={c.to} />
               ))}
             </tbody>
           </table>

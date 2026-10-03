@@ -5,17 +5,32 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { UOM_GROUPS, UOM_OTHER } from '@/data/uom'
 import type { Step2FormValues } from '@/lib/bookingSchemas'
 import { emptyItem } from '@/lib/bookingMapping'
 import { formatDimensions, formatWeight } from '@/lib/format'
 import type { Package } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-// Name | HSN | Qty | Unit price | Weight | Priority | Remove
+// Name | HSN | Qty | UOM | Unit price | IGST | Weight | Priority | Remove
+// Wraps to 4 columns below xl (name on its own line).
 const ROW_GRID =
-  'grid grid-cols-2 gap-x-3 gap-y-3 md:grid-cols-[minmax(0,1fr)_112px_76px_124px_108px_40px_40px] md:items-start md:gap-y-0'
+  'grid grid-cols-2 gap-x-3 gap-y-3 md:grid-cols-4 xl:grid-cols-[minmax(0,1fr)_96px_64px_132px_108px_72px_92px_40px_40px] xl:items-start xl:gap-y-0'
 
-const number = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const number = new Intl.NumberFormat('en-IN', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
 
 function money(n: number, currency: string) {
   return currency ? `${number.format(n)} ${currency}` : number.format(n)
@@ -47,7 +62,9 @@ export function ItemsCard({ packages }: { packages: Package[] }) {
   const focusIndex = useRef<number | null>(null)
   useEffect(() => {
     if (focusIndex.current === null) return
-    document.querySelector<HTMLInputElement>(`input[name="items.${focusIndex.current}.name"]`)?.focus()
+    document
+      .querySelector<HTMLInputElement>(`input[name="items.${focusIndex.current}.name"]`)
+      ?.focus()
     focusIndex.current = null
   }, [fields.length])
 
@@ -94,7 +111,8 @@ export function ItemsCard({ packages }: { packages: Package[] }) {
                 .filter(({ f }) => f.boxNumber === boxNumber)
               const boxValue = rows.reduce((s, { index }) => s + lineValue(index), 0)
               const boxGrams = rows.reduce(
-                (s, { index }) => s + (Number(items[index]?.weight) || 0) * (Number(items[index]?.quantity) || 0),
+                (s, { index }) =>
+                  s + (Number(items[index]?.weight) || 0) * (Number(items[index]?.quantity) || 0),
                 0,
               )
 
@@ -106,14 +124,23 @@ export function ItemsCard({ packages }: { packages: Package[] }) {
                 >
                   <header className="flex items-center justify-between gap-3 border-b border-border bg-[#f8fafc] px-4 py-3">
                     <div className="flex min-w-0 items-baseline gap-3">
-                      <h3 id={`box-${boxNumber}-title`} className="text-sm font-semibold text-foreground">
+                      <h3
+                        id={`box-${boxNumber}-title`}
+                        className="text-sm font-semibold text-foreground"
+                      >
                         Box {boxNumber}
                       </h3>
                       <span className="truncate text-xs tabular-nums text-muted-foreground">
-                        {formatDimensions(pkg.lengthCm, pkg.widthCm, pkg.heightCm)}, {formatWeight(pkg.actualWeight)}
+                        {formatDimensions(pkg.lengthCm, pkg.widthCm, pkg.heightCm)},{' '}
+                        {formatWeight(pkg.actualWeight)}
                       </span>
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={() => addItem(boxNumber)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addItem(boxNumber)}
+                    >
                       <Plus /> Add item
                     </Button>
                   </header>
@@ -132,17 +159,22 @@ export function ItemsCard({ packages }: { packages: Package[] }) {
                     <div className="px-4 pb-4 pt-3">
                       <div
                         aria-hidden
-                        className={cn(ROW_GRID, 'hidden pb-2 text-xs font-medium text-muted-foreground md:grid')}
+                        className={cn(
+                          ROW_GRID,
+                          'hidden pb-2 text-xs font-medium text-muted-foreground xl:grid',
+                        )}
                       >
                         <span>Item</span>
                         <span>HSN code</span>
                         <span>Qty</span>
+                        <span>UOM</span>
                         <span>Unit price{currency ? ` (${currency})` : ''}</span>
+                        <span>IGST %</span>
                         <span>Unit weight (g)</span>
                         <span className="sr-only">Priority</span>
                         <span className="sr-only">Remove</span>
                       </div>
-                      <ol className="space-y-3 md:space-y-2">
+                      <ol className="space-y-3 xl:space-y-2">
                         {rows.map(({ f, index }) => (
                           <ItemRow
                             key={f.id}
@@ -157,7 +189,10 @@ export function ItemsCard({ packages }: { packages: Package[] }) {
                           {rows.length} {rows.length === 1 ? 'item' : 'items'}
                         </span>
                         <span>
-                          Value <span className="font-semibold text-foreground">{money(boxValue, currency)}</span>
+                          Value{' '}
+                          <span className="font-semibold text-foreground">
+                            {money(boxValue, currency)}
+                          </span>
                         </span>
                         {boxGrams > 0 && (
                           <span>
@@ -180,6 +215,75 @@ export function ItemsCard({ packages }: { packages: Package[] }) {
   )
 }
 
+/** UOM picker; "Other" reveals a text box for a unit that isn't listed. */
+function UomField({ index }: { index: number }) {
+  const { control, setValue } = useFormContext<Step2FormValues>()
+  const uom = useWatch({ control, name: `items.${index}.uom` })
+
+  return (
+    <div className="space-y-2">
+      <FormField
+        control={control}
+        name={`items.${index}.uom`}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-xs xl:sr-only">UOM</FormLabel>
+            <Select
+              value={field.value}
+              onValueChange={(v) => {
+                field.onChange(v)
+                if (v !== UOM_OTHER)
+                  setValue(`items.${index}.uomOther`, '', { shouldValidate: false })
+              }}
+            >
+              <FormControl>
+                <SelectTrigger ref={field.ref} onBlur={field.onBlur} className="h-10">
+                  <SelectValue placeholder="Select…" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent className="max-h-80">
+                {UOM_GROUPS.map((g, gi) => (
+                  <SelectGroup key={g.label}>
+                    {gi > 0 && <SelectSeparator />}
+                    <SelectLabel>{g.label}</SelectLabel>
+                    {g.options.map((o) => (
+                      <SelectItem key={o.code} value={o.code}>
+                        {o.code} - {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      {uom === UOM_OTHER && (
+        <FormField
+          control={control}
+          name={`items.${index}.uomOther`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="sr-only">Other unit</FormLabel>
+              <FormControl>
+                <Input
+                  className="h-10"
+                  placeholder="Enter unit"
+                  autoComplete="off"
+                  autoFocus
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+    </div>
+  )
+}
+
 function ItemRow({
   index,
   currency,
@@ -194,13 +298,18 @@ function ItemRow({
   const label = name?.trim() || `item ${index + 1}`
 
   return (
-    <li className={cn(ROW_GRID, 'border-b border-[#edf1f6] pb-3 last:border-0 last:pb-0 md:border-0 md:pb-0')}>
+    <li
+      className={cn(
+        ROW_GRID,
+        'border-b border-[#edf1f6] pb-3 last:border-0 last:pb-0 xl:border-0 xl:pb-0',
+      )}
+    >
       <FormField
         control={control}
         name={`items.${index}.name`}
         render={({ field }) => (
-          <FormItem className="col-span-2 md:col-span-1">
-            <FormLabel className="text-xs md:sr-only">Item</FormLabel>
+          <FormItem className="col-span-2 md:col-span-4 xl:col-span-1">
+            <FormLabel className="text-xs xl:sr-only">Item</FormLabel>
             <FormControl>
               <Input className="h-10" placeholder="Cotton T-shirt" autoComplete="off" {...field} />
             </FormControl>
@@ -213,9 +322,14 @@ function ItemRow({
         name={`items.${index}.hsnCode`}
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-xs md:sr-only">HSN code</FormLabel>
+            <FormLabel className="text-xs xl:sr-only">HSN code</FormLabel>
             <FormControl>
-              <Input className="h-10 tabular-nums" placeholder="6109" autoComplete="off" {...field} />
+              <Input
+                className="h-10 tabular-nums"
+                placeholder="6109"
+                autoComplete="off"
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -226,7 +340,7 @@ function ItemRow({
         name={`items.${index}.quantity`}
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-xs md:sr-only">Qty</FormLabel>
+            <FormLabel className="text-xs xl:sr-only">Qty</FormLabel>
             <FormControl>
               <Input
                 className="h-10 tabular-nums"
@@ -240,12 +354,15 @@ function ItemRow({
           </FormItem>
         )}
       />
+      <UomField index={index} />
       <FormField
         control={control}
         name={`items.${index}.price`}
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-xs md:sr-only">Unit price{currency ? ` (${currency})` : ''}</FormLabel>
+            <FormLabel className="text-xs xl:sr-only">
+              Unit price{currency ? ` (${currency})` : ''}
+            </FormLabel>
             <FormControl>
               <Input
                 className="h-10 tabular-nums"
@@ -261,10 +378,10 @@ function ItemRow({
       />
       <FormField
         control={control}
-        name={`items.${index}.weight`}
+        name={`items.${index}.igst`}
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-xs md:sr-only">Unit weight (g)</FormLabel>
+            <FormLabel className="text-xs xl:sr-only">IGST %</FormLabel>
             <FormControl>
               <Input
                 className="h-10 tabular-nums"
@@ -278,7 +395,26 @@ function ItemRow({
           </FormItem>
         )}
       />
-      <div className="col-span-2 flex items-center justify-between gap-2 md:contents">
+      <FormField
+        control={control}
+        name={`items.${index}.weight`}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-xs xl:sr-only">Unit weight (g)</FormLabel>
+            <FormControl>
+              <Input
+                className="h-10 tabular-nums"
+                inputMode="decimal"
+                placeholder="Optional"
+                {...field}
+                onChange={(e) => field.onChange(clean(e.target.value, true))}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="col-span-2 flex items-center justify-between gap-2 md:self-end xl:contents">
         <FormField
           control={control}
           name={`items.${index}.priority`}
@@ -292,14 +428,14 @@ function ItemRow({
                 title={high ? 'High priority' : 'Mark as high priority'}
                 onClick={() => field.onChange(high ? 'NORMAL' : 'HIGH')}
                 className={cn(
-                  'inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] px-3 text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/25 md:w-10 md:px-0',
+                  'inline-flex h-10 items-center justify-center gap-1.5 rounded-[8px] px-3 text-xs font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/25 xl:w-10 xl:px-0',
                   high
                     ? 'bg-[#fffbeb] text-[#b45309] hover:bg-[#fef3c7]'
                     : 'text-[#aab5c4] hover:bg-[#f6f9fd] hover:text-[#526581]',
                 )}
               >
                 <Flag className={cn('size-4', high && 'fill-current')} />
-                <span className="md:sr-only">{high ? 'High priority' : 'Normal priority'}</span>
+                <span className="xl:sr-only">{high ? 'High priority' : 'Normal priority'}</span>
               </button>
             )
           }}

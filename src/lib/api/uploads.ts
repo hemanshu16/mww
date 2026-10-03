@@ -1,6 +1,9 @@
 import { apiClient } from '@/lib/api/client'
 import type { KycDownloadUrl, KycUploadUrl } from '@/lib/types'
 
+export const KYC_ACCEPT = 'image/png,image/jpeg,image/webp,application/pdf'
+export const KYC_MAX_BYTES = 10 * 1024 * 1024
+
 export function requestKycUploadUrl(fileName: string, contentType?: string) {
   return apiClient.post<KycUploadUrl>('/uploads/kyc/upload-url', { fileName, contentType })
 }
@@ -13,12 +16,17 @@ export function requestKycDownloadUrl(path: string) {
  * Full KYC upload: ask for a signed URL, PUT the raw bytes to storage, and
  * return the storage `path` string to persist on the shipper record.
  * `onProgress` reports 0..1; uses XHR so we get upload progress events.
+ * `requestUrl` swaps in another signed-URL issuer (the admin endpoint).
  */
 export async function uploadKycFile(
   file: File,
   onProgress?: (fraction: number) => void,
+  requestUrl: (
+    fileName: string,
+    contentType?: string,
+  ) => Promise<KycUploadUrl> = requestKycUploadUrl,
 ): Promise<string> {
-  const { path, signedUrl } = await requestKycUploadUrl(file.name, file.type || undefined)
+  const { path, signedUrl } = await requestUrl(file.name, file.type || undefined)
 
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest()

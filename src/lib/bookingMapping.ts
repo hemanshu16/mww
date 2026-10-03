@@ -1,4 +1,5 @@
 import type { ItemFormValues, Step1FormValues, Step2FormValues } from '@/lib/bookingSchemas'
+import { isKnownUom, UOM_OTHER } from '@/data/uom'
 import type {
   Booking,
   BookingItem,
@@ -124,10 +125,16 @@ export function emptyItem(boxNumber: number): ItemFormValues {
     price: '',
     hsnCode: '',
     weight: '',
+    uom: '',
+    uomOther: '',
+    igst: '',
   }
 }
 
 function bookingItemToForm(i: BookingItem): ItemFormValues {
+  // A saved unit that isn't in the list was typed in under "Other".
+  const uom = i.uom ?? ''
+  const known = !uom || isKnownUom(uom)
   return {
     boxNumber: i.boxNumber,
     priority: i.priority,
@@ -136,6 +143,9 @@ function bookingItemToForm(i: BookingItem): ItemFormValues {
     price: String(i.price),
     hsnCode: i.hsnCode,
     weight: i.weight === null ? '' : String(i.weight),
+    uom: known ? uom : UOM_OTHER,
+    uomOther: known ? '' : uom,
+    igst: i.igst == null ? '' : String(i.igst),
   }
 }
 
@@ -149,6 +159,8 @@ function bookingItemToInput(i: BookingItem): ItemInput {
     hsnCode: i.hsnCode,
   }
   if (i.weight !== null) input.weight = i.weight
+  if (i.uom) input.uom = i.uom
+  if (i.igst != null) input.igst = i.igst
   return input
 }
 
@@ -164,8 +176,10 @@ export function itemsToInput(items: ItemFormValues[]): ItemInput[] {
         quantity: Number(i.quantity),
         price: Number(i.price),
         hsnCode: i.hsnCode.trim(),
+        uom: i.uom === UOM_OTHER ? i.uomOther.trim() : i.uom,
       }
       if (i.weight.trim()) input.weight = Number(i.weight)
+      if (i.igst.trim()) input.igst = Number(i.igst)
       return input
     })
 }

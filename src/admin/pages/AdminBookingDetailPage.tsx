@@ -10,6 +10,7 @@ import {
   useDeleteAdminBooking,
 } from '@/admin/hooks'
 import { ActivityHistory } from '@/admin/components/activity/ActivityList'
+import { AdminKycSection } from '@/admin/components/bookings/AdminKycSection'
 import type { AdminBookingDetail } from '@/admin/types'
 import { ApiRequestError, getApiErrorMessage } from '@/lib/api/client'
 import { formatDate, formatDateTime, formatINR } from '@/lib/format'
@@ -264,7 +265,11 @@ export default function AdminBookingDetailPage() {
         )}
         <TabsContent value="details" className={cn('space-y-6', showHistory && 'mt-6')}>
           <PaymentsCard booking={booking} />
-          <BookingRecap booking={booking} kycFiles={false} showItems />
+          <BookingRecap
+            booking={booking}
+            showItems
+            shipperKyc={<AdminKycSection booking={booking} onStale={onStale} />}
+          />
         </TabsContent>
         {showHistory && (
           <TabsContent value="history" className="mt-6">

@@ -69,7 +69,7 @@ function KycReadOnly({ values }: { values: Step2FormValues['shipper'] }) {
       )}
       {block(2, values.kyc2Type, values.kyc2Number, docs([values.kyc2Doc]))}
       <p className="text-xs text-muted-foreground">
-        KYC details can only be changed by the customer.
+        Edit KYC details and documents from the booking&apos;s detail page.
       </p>
     </div>
   )

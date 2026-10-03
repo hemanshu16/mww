@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { INVOICE_TYPES, ITEM_PRIORITIES, KYC_TYPES, SHIPMENT_TYPES } from '@/lib/types'
+import { UOM_OTHER } from '@/data/uom'
 
 // Numeric fields are held as strings in form state (native number inputs emit
 // strings) and converted to numbers when building the API payload. This keeps
@@ -98,27 +99,43 @@ export const invoiceSchema = z
     message: 'Invoice type is required',
   })
 
-export const itemSchema = z.object({
-  boxNumber: z.number().int().min(1),
-  priority: z.enum(ITEM_PRIORITIES),
-  name: z.string().trim().min(1, 'Enter what the item is'),
-  quantity: z
-    .string()
-    .trim()
-    .min(1, 'Required')
-    .refine((v) => /^\d+$/.test(v) && Number(v) >= 1, 'Whole number, 1 or more'),
-  price: z
-    .string()
-    .trim()
-    .min(1, 'Required')
-    .refine((v) => /^\d+(\.\d{1,2})?$/.test(v), 'Up to 2 decimals'),
-  hsnCode: z.string().trim().min(1, 'Required'),
-  // Grams; optional.
-  weight: z
-    .string()
-    .trim()
-    .refine((v) => !v || (Number.isFinite(Number(v)) && Number(v) > 0), 'Must be more than 0'),
-})
+export const itemSchema = z
+  .object({
+    boxNumber: z.number().int().min(1),
+    priority: z.enum(ITEM_PRIORITIES),
+    name: z.string().trim().min(1, 'Enter what the item is'),
+    quantity: z
+      .string()
+      .trim()
+      .min(1, 'Required')
+      .refine((v) => /^\d+$/.test(v) && Number(v) >= 1, 'Whole number, 1 or more'),
+    price: z
+      .string()
+      .trim()
+      .min(1, 'Required')
+      .refine((v) => /^\d+(\.\d{1,2})?$/.test(v), 'Up to 2 decimals'),
+    hsnCode: z.string().trim().min(1, 'Required'),
+    // Grams; optional.
+    weight: z
+      .string()
+      .trim()
+      .refine((v) => !v || (Number.isFinite(Number(v)) && Number(v) > 0), 'Must be more than 0'),
+    // A code from the UOM list; UOM_OTHER means the free text in `uomOther`.
+    uom: z.string().min(1, 'Required'),
+    uomOther: z.string().trim().max(50, 'Too long'),
+    // Percent; optional.
+    igst: z
+      .string()
+      .trim()
+      .refine(
+        (v) => !v || (/^\d+(\.\d{1,2})?$/.test(v) && Number(v) <= 100),
+        '0–100, up to 2 decimals',
+      ),
+  })
+  .refine((v) => v.uom !== UOM_OTHER || v.uomOther.length > 0, {
+    path: ['uomOther'],
+    message: 'Enter the unit',
+  })
 export type ItemFormValues = z.infer<typeof itemSchema>
 
 export const step2Schema = z.object({

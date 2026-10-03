@@ -39,7 +39,14 @@ export const AUDIT_ACTIONS: { group: string; actions: string[] }[] = [
   },
   {
     group: 'Bookings',
-    actions: ['booking.update', 'booking.parties.update', 'booking.cancel', 'booking.delete'],
+    actions: [
+      'booking.update',
+      'booking.parties.update',
+      'booking.kyc.update',
+      'booking.kyc.view',
+      'booking.cancel',
+      'booking.delete',
+    ],
   },
   {
     group: 'Staff and roles',

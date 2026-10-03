@@ -30,6 +30,7 @@ import {
   setCourierProviderStatus,
   setCustomerStatus,
   updateAdminBooking,
+  updateAdminBookingKyc,
   updateAdminBookingParties,
   updateBankAccount,
   updateCourierProvider,
@@ -49,6 +50,7 @@ import type {
   AddWalletTransactionInput,
   AdminBookingDetail,
   AdminCourierProvider,
+  AdminKycInput,
   Concurrency,
   Customer,
   UpdateCustomerInput,
@@ -435,6 +437,14 @@ export function useUpdateAdminBookingParties(id: string) {
   const after = useBookingWriteEffects()
   return useMutation({
     mutationFn: (input: PartiesInput & Concurrency) => updateAdminBookingParties(id, input),
+    onSuccess: after,
+  })
+}
+
+export function useUpdateAdminBookingKyc(id: string) {
+  const after = useBookingWriteEffects()
+  return useMutation({
+    mutationFn: (input: AdminKycInput & Concurrency) => updateAdminBookingKyc(id, input),
     onSuccess: after,
   })
 }

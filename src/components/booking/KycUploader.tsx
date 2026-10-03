@@ -1,18 +1,10 @@
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { FileText, Loader2, UploadCloud, X } from 'lucide-react'
-import { uploadKycFile } from '@/lib/api/uploads'
+import { KYC_ACCEPT, KYC_MAX_BYTES, uploadKycFile } from '@/lib/api/uploads'
 import { getApiErrorMessage } from '@/lib/api/client'
 import { cn } from '@/lib/utils'
-
-const ACCEPT = 'image/png,image/jpeg,image/webp,application/pdf'
-const MAX_BYTES = 10 * 1024 * 1024
-
-/** Show only the trailing file name from a storage path like kyc/<id>/<uuid>-name.jpg. */
-function displayName(path: string): string {
-  const base = path.split('/').pop() ?? path
-  return base.replace(/^[0-9a-f-]{8,}-/i, '')
-}
+import { kycFileName } from '@/lib/format'
 
 export function KycUploader({
   label,
@@ -27,7 +19,7 @@ export function KycUploader({
   const [progress, setProgress] = useState<number | null>(null)
 
   const handleFile = async (file: File) => {
-    if (file.size > MAX_BYTES) {
+    if (file.size > KYC_MAX_BYTES) {
       toast.error('File too large. Maximum size is 10 MB.')
       return
     }
@@ -52,7 +44,7 @@ export function KycUploader({
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPT}
+        accept={KYC_ACCEPT}
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0]
@@ -64,7 +56,7 @@ export function KycUploader({
         <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
           <FileText className="size-4 shrink-0 text-primary" />
           <span className="min-w-0 flex-1 truncate text-sm" title={value}>
-            {displayName(value)}
+            {kycFileName(value)}
           </span>
           <button
             type="button"
