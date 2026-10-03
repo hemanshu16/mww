@@ -142,7 +142,7 @@ function SidebarFooter() {
               <div className="mt-2 flex flex-wrap gap-1">
                 {profile?.isSuperAdmin && <Badge variant="gold">Super admin</Badge>}
                 {profile?.roles.map((r) => (
-                  <Badge key={r.id} variant="booked">
+                  <Badge key={r.id} variant="info">
                     {r.name}
                   </Badge>
                 ))}

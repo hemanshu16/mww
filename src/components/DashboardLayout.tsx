@@ -4,13 +4,14 @@ import {
   LayoutDashboard,
   Package,
   PlusCircle,
-  User,
+  UserRound,
   LogOut,
   Menu,
   X,
   ChevronDown,
   Search,
   Wallet,
+  WalletCards,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useWallet } from '@/hooks/useWallet'
@@ -35,8 +36,8 @@ const NAV_SECTIONS = [
       { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
       { to: '/dashboard/bookings', label: 'Bookings', icon: Package, end: false },
       { to: '/dashboard/bookings/new', label: 'New Booking', icon: PlusCircle, end: false },
-      { to: '/dashboard/payments', label: 'Payments', icon: Wallet, end: false },
-      { to: '/dashboard/profile', label: 'Profile', icon: User, end: false },
+      { to: '/dashboard/payments', label: 'Payments', icon: WalletCards, end: false },
+      { to: '/dashboard/profile', label: 'Profile', icon: UserRound, end: false },
     ],
   },
 ]
@@ -46,7 +47,7 @@ function NavItems({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="flex flex-col gap-6 px-3">
       {NAV_SECTIONS.map((section) => (
         <div key={section.label} className="flex flex-col gap-1">
-          <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8291a8]">
+          <p className="micro-label px-3 pb-2 pt-1">
             {section.label}
           </p>
           <NavList items={section.items} onNavigate={onNavigate} />
@@ -75,8 +76,8 @@ function NavList({
             cn(
               'relative flex h-11 items-center gap-3 rounded-[10px] px-3 text-sm font-medium transition-colors duration-150',
               isActive
-                ? 'bg-[#eff6ff] text-[#21649c]'
-                : 'text-[#526581] hover:bg-[#f6f9fd] hover:text-foreground',
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-muted-foreground hover:bg-blue-50 hover:text-blue-700',
             )
           }
         >
@@ -84,7 +85,7 @@ function NavList({
             <>
               {isActive && (
                 <span
-                  className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary"
+                  className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-600"
                   aria-hidden
                 />
               )}
@@ -126,12 +127,12 @@ export function DashboardLayout() {
   return (
     <div className="monarch-app min-h-dvh bg-background">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-border bg-card lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-border bg-sidebar lg:flex">
         <SidebarBrand />
         <div className="flex-1 overflow-y-auto pb-6">
           <NavItems />
         </div>
-        <div className="border-t border-border px-5 py-4 text-[11px] text-[#8291a8]">
+        <div className="border-t border-border px-5 py-4 text-[11px] text-subtle">
           © {new Date().getFullYear()} Monarch Worldwide Express
         </div>
       </aside>
@@ -160,7 +161,7 @@ export function DashboardLayout() {
 
       <div className="lg:pl-56">
         {/* Top header */}
-        <header className="sticky top-0 z-20 flex h-[68px] items-center gap-3 border-b border-border bg-card px-4 sm:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-card px-4 sm:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -173,11 +174,11 @@ export function DashboardLayout() {
 
           {/* Search */}
           <div className="relative hidden max-w-[580px] flex-1 sm:block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#8291a8]" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" />
             <input
               type="text"
               placeholder="Search bookings, tracking…"
-              className="h-10 w-full min-w-[220px] rounded-[8px] border border-border bg-[#f8fafc] pl-9 pr-3 text-sm text-foreground placeholder:text-[#9aa8ba] focus:border-primary focus:bg-card focus:outline-none focus:ring-[3px] focus:ring-primary/10"
+              className="h-10 w-full min-w-[220px] rounded-[10px] border border-border bg-blue-50 pl-9 pr-3 text-sm text-foreground placeholder:text-subtle focus:border-blue-500 focus:bg-card focus:outline-none focus:ring-[3px] focus:ring-blue-500/15"
             />
           </div>
 
@@ -189,8 +190,8 @@ export function DashboardLayout() {
                 className={cn(
                   'hidden items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold tabular-nums transition-colors md:inline-flex',
                   wallet.data.availableBalance > 0
-                    ? 'border-[#a7f3d0] bg-[#ecfdf5] text-[#047857] hover:bg-[#d1fae5]'
-                    : 'border-[#fecaca] bg-[#fef2f2] text-[#b91c1c] hover:bg-[#fee2e2]',
+                    ? 'border-success/30 bg-success-soft text-success-ink hover:bg-success/15'
+                    : 'border-danger/30 bg-danger-soft text-danger-ink hover:bg-danger/15',
                 )}
               >
                 <Wallet className="size-3.5" />
@@ -198,13 +199,13 @@ export function DashboardLayout() {
               </NavLink>
             )}
             {profile?.isGstBilling && (
-              <Badge variant="booked" className="hidden sm:inline-flex">
+              <Badge variant="info" className="hidden sm:inline-flex">
                 GST billing
               </Badge>
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-[#f6f9fd] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <button className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Avatar className="size-9">
                     <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
@@ -230,7 +231,7 @@ export function DashboardLayout() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/dashboard/profile')}>
-                  <User className="size-4" />
+                  <UserRound className="size-4" />
                   Profile
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -245,7 +246,7 @@ export function DashboardLayout() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
           <Outlet />
         </main>
       </div>

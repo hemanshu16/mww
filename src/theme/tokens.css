@@ -1,0 +1,202 @@
+/* ============================================================
+   Monarch design tokens — single source of truth for the
+   authenticated app (dashboard, auth, admin) under `.monarch-app`.
+   The landing page keeps its own :root palette in index.css.
+
+   Rule: components never pick colours/sizes themselves — they use
+   these tokens (directly, or through the Tailwind names mapped in
+   the @theme block at the bottom).
+   ============================================================ */
+
+.monarch-app {
+  /* ---- Colour: brand blue (OKLCH, hue 255) ------------------- */
+  --blue-50: oklch(97% 0.012 255);
+  --blue-100: oklch(94% 0.025 255);
+  --blue-200: oklch(89% 0.045 255);
+  --blue-300: oklch(81% 0.07 255);
+  --blue-400: oklch(70% 0.1 255);
+  --blue-500: oklch(57% 0.12 255);
+  --blue-600: oklch(45% 0.125 255); /* primary */
+  --blue-700: oklch(37% 0.115 255); /* hover · deep CTA */
+  --blue-800: oklch(29% 0.09 255); /* dark */
+  --blue-900: oklch(23% 0.065 255); /* navy: tooltips, dark surfaces */
+
+  /* ---- Colour: slate neutrals -------------------------------- */
+  --neutral-100: oklch(98% 0.006 255);
+  --neutral-200: oklch(95.5% 0.008 255);
+  --neutral-300: oklch(91% 0.014 255);
+  --neutral-400: oklch(84% 0.018 255);
+  --neutral-500: oklch(70% 0.02 255);
+  --neutral-600: oklch(60% 0.018 255);
+  --neutral-700: oklch(45% 0.025 255);
+  --neutral-800: oklch(33% 0.03 255);
+  --neutral-900: oklch(21% 0.03 255);
+
+  /* ---- Colour: surfaces & text ------------------------------- */
+  --background: oklch(98.5% 0.006 255);
+  --surface: oklch(100% 0 0);
+  --sidebar: oklch(99.2% 0.005 255);
+  --text-primary: oklch(21% 0.03 255);
+  --text-secondary: oklch(45% 0.025 255);
+  --text-muted: oklch(60% 0.018 255);
+  --border: oklch(91% 0.014 255);
+  --border-subtle: oklch(94% 0.01 255);
+  --border-strong: oklch(86% 0.02 255);
+
+  /* ---- Colour: status ----------------------------------------
+     *-ink is a darker shade of the status colour for small text on
+     the matching *-soft background (the base colour is for fills,
+     dots and sparklines; it is too light for 12px copy). */
+  --success: oklch(60% 0.145 150);
+  --success-soft: oklch(94% 0.04 150);
+  --success-ink: oklch(42% 0.11 150);
+  --warning: oklch(72% 0.135 75);
+  --warning-soft: oklch(95% 0.04 75);
+  --warning-ink: oklch(47% 0.1 65);
+  --danger: oklch(58% 0.19 25);
+  --danger-soft: oklch(95% 0.035 25);
+  --danger-ink: oklch(46% 0.17 25);
+
+  /* Amber ramp used by the shared Alert's warning variant */
+  --gold-100: var(--warning-soft);
+  --gold-300: oklch(86% 0.1 80);
+  --gold-600: var(--warning);
+  --gold-800: var(--warning-ink);
+
+  /* ---- shadcn mapping (every ui/ primitive reads these) ------- */
+  --foreground: var(--text-primary);
+  --card: var(--surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--blue-600);
+  --primary-foreground: oklch(100% 0 0);
+  --secondary: var(--blue-50);
+  --secondary-foreground: var(--blue-700);
+  --muted: var(--neutral-200);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--blue-50);
+  --accent-foreground: var(--blue-700);
+  --destructive: var(--danger);
+  --destructive-foreground: oklch(100% 0 0);
+  --success-foreground: oklch(100% 0 0);
+  --input: oklch(88% 0.018 255);
+  --ring: var(--blue-500);
+
+  /* ---- Typography -------------------------------------------- */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: var(--font-sans);
+  --text-micro: 11px; /* eyebrow / table head, uppercase + tracked */
+  --text-small: 13px;
+  --text-body: 14px;
+  --text-card-title: 15px;
+  --text-section: 18px;
+  --text-page-title: 28px;
+  --text-hero: 32px;
+  --text-kpi: 28px;
+  --tracking-micro: 0.08em;
+  --tracking-display: -0.02em;
+
+  /* ---- Spacing (4/8 system) ---------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px; /* grid gap */
+  --space-8: 32px; /* page padding (mobile→tablet), section gap */
+  --space-10: 40px; /* page padding (desktop) */
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ---- Radius ------------------------------------------------- */
+  --radius: 0.75rem; /* shadcn base: md = 10px, lg = 12px */
+  --radius-control: 10px; /* buttons, inputs, nav items */
+  --radius-card: 16px;
+  --radius-chip: 12px; /* icon containers */
+  --radius-pill: 999px;
+
+  /* ---- Shadows (barely-there) -------------------------------- */
+  --shadow-card: 0 1px 2px rgba(15, 35, 65, 0.03), 0 8px 24px rgba(15, 35, 65, 0.05);
+  --shadow-card-hover: 0 2px 4px rgba(15, 35, 65, 0.04), 0 12px 32px rgba(15, 35, 65, 0.08);
+  --shadow-cta: 0 1px 2px rgba(15, 35, 65, 0.12), 0 4px 12px rgba(15, 35, 65, 0.14);
+  --shadow-dropdown: 0 2px 4px rgba(15, 35, 65, 0.05), 0 12px 32px rgba(15, 35, 65, 0.1);
+
+  /* ---- Layout & component sizes ------------------------------ */
+  --w-sidebar: 224px;
+  --h-header: 64px;
+  --h-control: 40px;
+  --h-input: 44px;
+  --h-nav-item: 44px;
+  --content-max: 1440px;
+
+  /* ---- Icons (Lucide, outline only) -------------------------- */
+  --icon-sm: 16px;
+  --icon-md: 18px;
+  --icon-lg: 20px;
+  --icon-xl: 24px;
+  --icon-stroke: 1.75;
+
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* One stroke weight for every Lucide icon in the app */
+.monarch-app .lucide {
+  stroke-width: var(--icon-stroke);
+}
+
+@layer base {
+  .monarch-app :is(h1, h2, h3, h4),
+  .monarch-app .font-heading {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .monarch-app :is(input, textarea)::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+@layer components {
+  /* Uppercase tracked micro label: WELCOME BACK · LAST 9 MONTHS · VS LAST MONTH */
+  .monarch-app .micro-label {
+    font-size: var(--text-micro);
+    font-weight: 600;
+    letter-spacing: var(--tracking-micro);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* Faint dotted grid, fading out toward the edges */
+  .monarch-app .dotted-grid {
+    background-image: radial-gradient(
+      color-mix(in oklch, var(--blue-400) 38%, transparent) 1px,
+      transparent 1.4px
+    );
+    background-size: 16px 16px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 90% at 80% 50%, #000 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse 70% 90% at 80% 50%, #000 20%, transparent 75%);
+  }
+}
+
+/* ---- Tailwind names for the tokens above ----------------------
+   (`bg-blue-50`, `text-subtle`, `bg-success-soft`, `border-border-subtle`…) */
+@theme inline {
+  --color-blue-50: var(--blue-50);
+  --color-surface: var(--surface);
+  --color-sidebar: var(--sidebar);
+  --color-subtle: var(--text-muted);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-success-soft: var(--success-soft);
+  --color-success-ink: var(--success-ink);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-ink: var(--warning-ink);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
+}

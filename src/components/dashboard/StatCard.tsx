@@ -1,17 +1,21 @@
 import { ArrowDownRight, ArrowUpRight, type LucideIcon } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Sparkline } from '@/components/dashboard/Sparkline'
+import { Sparkline, type SparkTone } from '@/components/dashboard/Sparkline'
 import { cn } from '@/lib/utils'
 
 export interface StatCardProps {
   label: string
   value: string | number
   icon: LucideIcon
-  /** Tailwind classes for the icon chip bg + text, e.g. 'bg-[#eff6ff] text-primary'. */
-  iconTone: string
-  trend?: { value: string; direction: 'up' | 'down'; caption?: string }
-  spark?: { data: number[]; stroke?: string }
+  trend?: {
+    value: string
+    direction: 'up' | 'down'
+    /** Whether this movement is good news (default: up = good). Drives the colour. */
+    favorable?: boolean
+    caption?: string
+  }
+  spark?: { data: number[]; tone?: SparkTone }
   loading?: boolean
   onClick?: () => void
   interactive?: boolean
@@ -21,13 +25,13 @@ export function StatCard({
   label,
   value,
   icon: Icon,
-  iconTone,
   trend,
   spark,
   loading,
   onClick,
   interactive,
 }: StatCardProps) {
+  const favorable = trend ? (trend.favorable ?? trend.direction === 'up') : true
   return (
     <Card
       onClick={onClick}
@@ -37,11 +41,11 @@ export function StatCard({
       )}
     >
       <CardContent className="p-5">
-        <div className="flex items-center justify-between">
-          <div className={cn('flex size-10 items-center justify-center rounded-[10px]', iconTone)}>
+        <div className="flex items-start justify-between">
+          <div className="flex size-10 items-center justify-center rounded-[12px] bg-blue-50 text-blue-600">
             <Icon className="size-5" />
           </div>
-          {spark && !loading && <Sparkline data={spark.data} stroke={spark.stroke} />}
+          {spark && !loading && <Sparkline data={spark.data} tone={spark.tone} />}
         </div>
         <p className="mt-4 text-[13px] font-medium text-muted-foreground">{label}</p>
         {loading ? (
@@ -52,11 +56,11 @@ export function StatCard({
           </p>
         )}
         {trend && !loading && (
-          <div className="mt-2 flex items-center gap-1.5 text-[13px]">
+          <div className="mt-3 flex items-center gap-2 text-[13px]">
             <span
               className={cn(
                 'inline-flex items-center gap-0.5 font-semibold',
-                trend.direction === 'up' ? 'text-[#047857]' : 'text-[#b91c1c]',
+                favorable ? 'text-success-ink' : 'text-danger-ink',
               )}
             >
               {trend.direction === 'up' ? (
@@ -66,7 +70,7 @@ export function StatCard({
               )}
               {trend.value}
             </span>
-            {trend.caption && <span className="text-muted-foreground">{trend.caption}</span>}
+            {trend.caption && <span className="micro-label">{trend.caption}</span>}
           </div>
         )}
       </CardContent>

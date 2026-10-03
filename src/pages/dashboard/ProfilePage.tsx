@@ -227,7 +227,7 @@ export default function ProfilePage() {
       <PageHeader
         title="Profile"
         description="Manage your account details and security."
-        actions={profile?.isGstBilling ? <Badge variant="booked">GST billing</Badge> : undefined}
+        actions={profile?.isGstBilling ? <Badge variant="info">GST billing</Badge> : undefined}
       />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ProfileForm />

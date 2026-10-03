@@ -250,7 +250,7 @@ export default function StaffPage() {
                           <span className="text-sm text-[#aab5c4]">No roles</span>
                         ) : (
                           s.roles.map((r) => (
-                            <Badge key={r.id} variant="booked">
+                            <Badge key={r.id} variant="info">
                               {r.name}
                             </Badge>
                           ))

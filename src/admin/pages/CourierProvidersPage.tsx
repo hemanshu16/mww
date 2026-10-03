@@ -116,7 +116,7 @@ export default function CourierProvidersPage() {
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {p.isGstApplicable ? (
-                        <Badge variant="booked">GST</Badge>
+                        <Badge variant="info">GST</Badge>
                       ) : (
                         <span className="text-sm text-muted-foreground">No GST</span>
                       )}

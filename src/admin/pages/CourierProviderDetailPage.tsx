@@ -72,7 +72,7 @@ export default function CourierProviderDetailPage() {
               </h1>
               <Badge variant={active ? 'success' : 'draft'}>{active ? 'Active' : 'Inactive'}</Badge>
               {provider.isGstApplicable ? (
-                <Badge variant="booked">GST</Badge>
+                <Badge variant="info">GST</Badge>
               ) : (
                 <Badge variant="draft">No GST</Badge>
               )}
