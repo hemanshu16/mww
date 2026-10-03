@@ -34,21 +34,16 @@ const schema = z.object({
     .string()
     .trim()
     .refine((v) => z.url().safeParse(v).success, 'Enter a full URL starting with https://'),
-  serviceCharge: z
-    .string()
-    .trim()
-    .regex(/^\d+(\.\d{1,2})?$/, 'Enter 0 or more, with at most 2 decimals'),
   isGstApplicable: z.boolean(),
 })
 type Values = z.infer<typeof schema>
 
-const FIELDS = ['name', 'logoUrl', 'serviceCharge', 'isGstApplicable'] as const
+const FIELDS = ['name', 'logoUrl', 'isGstApplicable'] as const
 
 function toValues(p: AdminCourierProvider | null): Values {
   return {
     name: p?.name ?? '',
     logoUrl: p?.logoUrl ?? '',
-    serviceCharge: p ? String(Number(p.serviceCharge)) : '',
     isGstApplicable: p?.isGstApplicable ?? true,
   }
 }
@@ -57,7 +52,6 @@ function toInput(v: Values): CourierProviderInput {
   return {
     name: v.name.trim(),
     logoUrl: v.logoUrl.trim(),
-    serviceCharge: Number(v.serviceCharge),
     isGstApplicable: v.isGstApplicable,
   }
 }
@@ -144,19 +138,6 @@ export function CourierProviderDialog({
                   <FormLabel required>Logo URL</FormLabel>
                   <FormControl>
                     <Input type="url" placeholder="https://…" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="serviceCharge"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Service charge (₹)</FormLabel>
-                  <FormControl>
-                    <Input inputMode="decimal" placeholder="250.00" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

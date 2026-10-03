@@ -20,7 +20,10 @@ export const ENTITY_PAGES: Record<AuditEntityType, { perm: string; href: (id: st
     ROLE: { perm: 'role.read', href: () => '/admin/roles' },
     COMPANY_PROFILE: { perm: 'company_settings.read', href: () => '/admin/company-settings' },
     BANK_ACCOUNT: { perm: 'company_settings.read', href: () => '/admin/company-settings' },
-    COURIER_PROVIDER: { perm: 'courier_provider.read', href: () => '/admin/courier-providers' },
+    COURIER_PROVIDER: {
+      perm: 'courier_provider.read',
+      href: (id) => `/admin/courier-providers/${id}`,
+    },
     COUNTRY: { perm: 'country.read', href: () => '/admin/countries' },
   }
 
@@ -79,6 +82,9 @@ export const AUDIT_ACTIONS: { group: string; actions: string[] }[] = [
       'courier_provider.create',
       'courier_provider.update',
       'courier_provider.update_status',
+      'courier_provider.margin.create',
+      'courier_provider.margin.update',
+      'courier_provider.margin.delete',
       'country.create',
       'country.update',
       'country.delete',

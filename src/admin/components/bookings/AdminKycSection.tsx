@@ -17,6 +17,7 @@ import type { AdminBookingDetail, AdminKycInput } from '@/admin/types'
 import { getApiErrorMessage } from '@/lib/api/client'
 import { KYC_ACCEPT, KYC_MAX_BYTES, uploadKycFile } from '@/lib/api/uploads'
 import { kycFileName } from '@/lib/format'
+import { openPendingTab } from '@/lib/pendingTab'
 import { KYC_TYPE_LABELS, KYC_TYPES, type KycType } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -88,15 +89,16 @@ export function AdminKycSection({
   }
 
   const view = async (field: DocField, path: string) => {
-    // Open the tab now, while we still have the click, or it gets blocked.
-    const tab = isImage(path) ? null : window.open('', '_blank')
+    // Images preview in a dialog. PDFs open in a tab, opened now while we still
+    // have the click (or it gets blocked); it shows a loader until the link arrives.
+    const image = isImage(path)
+    const tab = image ? null : openPendingTab(DOC_LABELS[field])
     try {
       const { signedUrl } = await requestAdminKycDownloadUrl(booking.id, path)
-      if (tab) {
-        tab.opener = null
-        tab.location.href = signedUrl
-      } else {
-        setPreview({ label: DOC_LABELS[field], url: signedUrl })
+      if (image) setPreview({ label: DOC_LABELS[field], url: signedUrl })
+      else if (tab) tab.go(signedUrl)
+      else if (!window.open(signedUrl, '_blank', 'noopener')) {
+        toast.error('Allow pop-ups for this site to view PDF documents.')
       }
     } catch (err) {
       tab?.close()

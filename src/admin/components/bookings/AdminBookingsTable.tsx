@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { PackageOpen } from 'lucide-react'
 import { Pager } from '@/admin/components/ListControls'
+import { getAdminBookingDocument } from '@/admin/api'
+import { BookingDocumentsPopover } from '@/components/booking/BookingDocumentsCard'
 import type { AdminBookingRow } from '@/admin/types'
 import { formatDate, formatINR, formatWeight } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -41,7 +43,7 @@ export function AdminBookingsTable({
   toolbar?: React.ReactNode
 }) {
   const navigate = useNavigate()
-  const columns = showCustomer ? 8 : 7
+  const columns = showCustomer ? 9 : 8
 
   return (
     <Card className="overflow-hidden">
@@ -57,6 +59,7 @@ export function AdminBookingsTable({
             <TableHead className="hidden text-right lg:table-cell">Boxes / weight</TableHead>
             <TableHead className="text-right">Price</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="text-right">Documents</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -125,6 +128,16 @@ export function AdminBookingsTable({
                 </TableCell>
                 <TableCell>
                   <StatusBadge status={b.status} />
+                </TableCell>
+                <TableCell className="text-right">
+                  {b.status === 'BOOKED' ? (
+                    <BookingDocumentsPopover
+                      bookingNumber={b.bookingNumber}
+                      fetchLink={(type, download) => getAdminBookingDocument(b.id, type, download)}
+                    />
+                  ) : (
+                    <span className="text-sm text-muted-foreground">—</span>
+                  )}
                 </TableCell>
               </TableRow>
             ))

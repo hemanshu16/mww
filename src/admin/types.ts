@@ -139,7 +139,7 @@ export interface AddWalletTransactionInput {
 }
 
 // ---------------------------------------------------------------------------
-// Courier providers (admin view — serviceCharge is a string here)
+// Courier providers
 // ---------------------------------------------------------------------------
 export type ProviderStatus = 'ACTIVE' | 'INACTIVE'
 
@@ -147,7 +147,6 @@ export interface AdminCourierProvider {
   id: string
   name: string
   logoUrl: string | null
-  serviceCharge: string
   isGstApplicable: boolean
   status: ProviderStatus
   createdAt: string
@@ -157,8 +156,31 @@ export interface AdminCourierProvider {
 export interface CourierProviderInput {
   name: string
   logoUrl: string
-  serviceCharge: number
   isGstApplicable: boolean
+}
+
+/** Our margin on top of the provider's price for a whole-kg weight range. */
+export interface MarginSlab {
+  id: string
+  /** Inclusive. */
+  minKg: number
+  /** Inclusive; null = "minKg and above". */
+  maxKg: number | null
+  /** Flat INR per shipment. */
+  margin: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminCourierProviderDetail extends AdminCourierProvider {
+  /** Lightest first. */
+  marginSlabs: MarginSlab[]
+}
+
+export interface MarginSlabInput {
+  minKg: number
+  maxKg: number | null
+  margin: number
 }
 
 // ---------------------------------------------------------------------------

@@ -11,6 +11,7 @@ import AdminBookingDetailPage from '@/admin/pages/AdminBookingDetailPage'
 import AdminBookingEditPage from '@/admin/pages/AdminBookingEditPage'
 import ActivityLogPage from '@/admin/pages/ActivityLogPage'
 import CourierProvidersPage from '@/admin/pages/CourierProvidersPage'
+import CourierProviderDetailPage from '@/admin/pages/CourierProviderDetailPage'
 import CountriesPage from '@/admin/pages/CountriesPage'
 import StaffPage from '@/admin/pages/StaffPage'
 import RolesPage from '@/admin/pages/RolesPage'
@@ -66,6 +67,10 @@ export default function AdminApp() {
             <Route
               path="courier-providers"
               element={guard('courier_provider.read', <CourierProvidersPage />)}
+            />
+            <Route
+              path="courier-providers/:id"
+              element={guard('courier_provider.read', <CourierProviderDetailPage />)}
             />
             <Route path="countries" element={guard('country.read', <CountriesPage />)} />
             <Route path="staff" element={guard('staff.read', <StaffPage />)} />

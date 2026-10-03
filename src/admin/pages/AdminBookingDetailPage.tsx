@@ -18,6 +18,8 @@ import { WALLET_CATEGORY_LABELS } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { StatusBadge } from '@/components/StatusBadge'
 import { BookingRecap } from '@/components/booking/BookingRecap'
+import { BookingDocumentsCard } from '@/components/booking/BookingDocumentsCard'
+import { getAdminBookingDocument } from '@/admin/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -265,6 +267,11 @@ export default function AdminBookingDetailPage() {
         )}
         <TabsContent value="details" className={cn('space-y-6', showHistory && 'mt-6')}>
           <PaymentsCard booking={booking} />
+          {booked && can('booking.read') && (
+            <BookingDocumentsCard
+              fetchLink={(type, download) => getAdminBookingDocument(booking.id, type, download)}
+            />
+          )}
           <BookingRecap
             booking={booking}
             showItems

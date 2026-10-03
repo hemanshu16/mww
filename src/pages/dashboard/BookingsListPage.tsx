@@ -4,13 +4,22 @@ import { useBookings } from '@/hooks/useBookings'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { StatusBadge } from '@/components/StatusBadge'
 import { RouteCell } from '@/components/booking/RouteCell'
 import { PageHeader } from '@/components/ui/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatDate, formatWeight } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { getBookingDocument } from '@/lib/api/bookings'
+import { BookingDocumentsPopover } from '@/components/booking/BookingDocumentsCard'
 import { BOOKING_STATUSES, SHIPMENT_TYPE_LABELS, type BookingStatus } from '@/lib/types'
 
 const PAGE_SIZE = 20
@@ -94,13 +103,14 @@ export default function BookingsListPage() {
               <TableHead className="hidden text-right sm:table-cell">Chargeable</TableHead>
               <TableHead className="hidden xl:table-cell">Created</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Documents</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((__, j) => (
+                  {Array.from({ length: 8 }).map((__, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-5 w-full max-w-[120px]" />
                     </TableCell>
@@ -109,13 +119,13 @@ export default function BookingsListPage() {
               ))
             ) : isError ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-sm text-destructive">
+                <TableCell colSpan={8} className="py-12 text-center text-sm text-destructive">
                   Couldn&apos;t load bookings. Please try again.
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={7} className="p-0">
+                <TableCell colSpan={8} className="p-0">
                   <EmptyState
                     icon={PackageOpen}
                     title={status ? `No ${status.toLowerCase()} bookings` : 'No bookings yet'}
@@ -132,7 +142,10 @@ export default function BookingsListPage() {
               items.map((b) => (
                 <TableRow key={b.id} className="cursor-pointer">
                   <TableCell>
-                    <Link to={`/dashboard/bookings/${b.id}`} className="font-medium hover:underline">
+                    <Link
+                      to={`/dashboard/bookings/${b.id}`}
+                      className="font-medium hover:underline"
+                    >
                       {b.bookingNumber}
                     </Link>
                     <div className="text-xs text-muted-foreground md:hidden">
@@ -154,6 +167,16 @@ export default function BookingsListPage() {
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={b.status} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {b.status === 'BOOKED' ? (
+                      <BookingDocumentsPopover
+                        bookingNumber={b.bookingNumber}
+                        fetchLink={(type, download) => getBookingDocument(b.id, type, download)}
+                      />
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

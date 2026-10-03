@@ -5,6 +5,9 @@ import {
   createCustomer,
   createBankAccount,
   createCourierProvider,
+  createMarginSlab,
+  deleteMarginSlab,
+  getCourierProvider,
   createRole,
   createStaff,
   deleteAdminBooking,
@@ -35,6 +38,7 @@ import {
   updateAdminBookingParties,
   updateBankAccount,
   updateCourierProvider,
+  updateMarginSlab,
   updateCreditLimit,
   updateCustomer,
   updateRole,
@@ -60,6 +64,7 @@ import type {
   CompanyProfileInput,
   CompanySettings,
   CourierProviderInput,
+  MarginSlabInput,
   CreateStaffInput,
   ProviderStatus,
   RoleInput,
@@ -77,6 +82,7 @@ export const adminKeys = {
   walletTxns: (userId: string, params: ListAdminWalletTxnParams) =>
     ['admin', 'wallet', userId, 'txns', params] as const,
   providers: ['admin', 'courier-providers'] as const,
+  provider: (id: string) => ['admin', 'courier-providers', id] as const,
   company: ['admin', 'company'] as const,
   lookupProviders: ['admin', 'lookups', 'providers'] as const,
   lookupCountries: ['admin', 'lookups', 'countries'] as const,
@@ -230,9 +236,52 @@ export function useAdminCourierProviders() {
   return useQuery({ queryKey: adminKeys.providers, queryFn: listAdminCourierProviders })
 }
 
+export function useAdminCourierProvider(id: string) {
+  return useQuery({
+    queryKey: adminKeys.provider(id),
+    queryFn: () => getCourierProvider(id),
+    enabled: !!id,
+  })
+}
+
+/** After a slab write: the provider's slabs and its history changed. */
+function useInvalidateSlabs(providerId: string) {
+  const qc = useQueryClient()
+  return () => {
+    qc.invalidateQueries({ queryKey: adminKeys.provider(providerId) })
+    qc.invalidateQueries({ queryKey: adminKeys.activityRoot })
+  }
+}
+
+export function useCreateMarginSlab(providerId: string) {
+  const invalidate = useInvalidateSlabs(providerId)
+  return useMutation({
+    mutationFn: (input: MarginSlabInput) => createMarginSlab(providerId, input),
+    onSuccess: invalidate,
+  })
+}
+
+export function useUpdateMarginSlab(providerId: string) {
+  const invalidate = useInvalidateSlabs(providerId)
+  return useMutation({
+    mutationFn: ({ slabId, input }: { slabId: string; input: Partial<MarginSlabInput> }) =>
+      updateMarginSlab(providerId, slabId, input),
+    onSuccess: invalidate,
+  })
+}
+
+export function useDeleteMarginSlab(providerId: string) {
+  const invalidate = useInvalidateSlabs(providerId)
+  return useMutation({
+    mutationFn: (slabId: string) => deleteMarginSlab(providerId, slabId),
+    onSuccess: invalidate,
+  })
+}
+
 function useInvalidateProviders() {
   const qc = useQueryClient()
   return () => {
+    // Prefix match: also refreshes any open provider detail.
     qc.invalidateQueries({ queryKey: adminKeys.providers })
     qc.invalidateQueries({ queryKey: queryKeys.courierProviders })
   }

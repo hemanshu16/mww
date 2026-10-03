@@ -1,6 +1,8 @@
 import { apiClient } from '@/lib/api/client'
 import type {
   BookingStatus,
+  DocumentLink,
+  DocumentType,
   KycDownloadUrl,
   KycUploadUrl,
   PartiesInput,
@@ -26,6 +28,9 @@ import type {
   LookupStaff,
   UpdateCustomerInput,
   AdminCourierProvider,
+  AdminCourierProviderDetail,
+  MarginSlab,
+  MarginSlabInput,
   AdminWalletSummary,
   AdminWalletTransactionList,
   BankAccount,
@@ -176,6 +181,34 @@ export function setCourierProviderStatus(id: string, status: ProviderStatus) {
   return apiClient.patch<AdminCourierProvider>(`/admin/courier-providers/${id}/status`, { status })
 }
 
+/** Includes the margin slabs (the list doesn't). */
+export function getCourierProvider(id: string) {
+  return apiClient.get<AdminCourierProviderDetail>(`/admin/courier-providers/${id}`)
+}
+
+/** 409 when the range overlaps another slab of this provider. */
+export function createMarginSlab(providerId: string, input: MarginSlabInput) {
+  return apiClient.post<MarginSlab>(`/admin/courier-providers/${providerId}/margin-slabs`, input)
+}
+
+/** Only the fields sent change. */
+export function updateMarginSlab(
+  providerId: string,
+  slabId: string,
+  input: Partial<MarginSlabInput>,
+) {
+  return apiClient.patch<MarginSlab>(
+    `/admin/courier-providers/${providerId}/margin-slabs/${slabId}`,
+    input,
+  )
+}
+
+export function deleteMarginSlab(providerId: string, slabId: string) {
+  return apiClient.delete<Record<string, never>>(
+    `/admin/courier-providers/${providerId}/margin-slabs/${slabId}`,
+  )
+}
+
 // --- company settings -------------------------------------------------------
 
 export function getCompanySettings() {
@@ -296,6 +329,13 @@ export function cancelAdminBooking(id: string, input: { reason?: string } & Conc
 
 export function deleteAdminBooking(id: string) {
   return apiClient.delete<Record<string, never>>(`/admin/bookings/${id}`)
+}
+
+/** Needs `booking.read`; same as the customer endpoint otherwise. */
+export function getAdminBookingDocument(id: string, type: DocumentType, download = false) {
+  return apiClient.get<DocumentLink>(
+    `/admin/bookings/${id}/documents/${type}${download ? '?download=true' : ''}`,
+  )
 }
 
 // Shipper KYC. Files go to the booking customer's KYC folder.

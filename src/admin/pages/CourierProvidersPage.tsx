@@ -1,18 +1,17 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Pencil, Plus, Truck } from 'lucide-react'
-import { toast } from 'sonner'
 import { useStaffAuth } from '@/admin/staffAuthContext'
-import { useAdminCourierProviders, useSetCourierProviderStatus } from '@/admin/hooks'
+import { useAdminCourierProviders } from '@/admin/hooks'
 import { CourierProviderDialog } from '@/admin/components/CourierProviderDialog'
+import { ProviderLogo, ProviderStatusSwitch } from '@/admin/components/CourierProviderBits'
 import type { AdminCourierProvider } from '@/admin/types'
-import { getApiErrorMessage } from '@/lib/api/client'
-import { formatDate, formatINR } from '@/lib/format'
+import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Switch } from '@/components/ui/switch'
 import { PageHeader } from '@/components/ui/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
@@ -24,49 +23,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-function ProviderLogo({ provider }: { provider: AdminCourierProvider }) {
-  const [broken, setBroken] = useState(false)
-  if (!provider.logoUrl || broken) {
-    return (
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-[#f1f5f9] text-sm font-semibold text-[#526581]">
-        {provider.name.charAt(0).toUpperCase()}
-      </div>
-    )
-  }
-  return (
-    <img
-      src={provider.logoUrl}
-      alt=""
-      onError={() => setBroken(true)}
-      className="size-10 shrink-0 rounded-[10px] border border-border bg-white object-contain p-1"
-    />
-  )
-}
-
-function StatusSwitch({ provider }: { provider: AdminCourierProvider }) {
-  const setStatus = useSetCourierProviderStatus()
-  return (
-    <Switch
-      checked={provider.status === 'ACTIVE'}
-      aria-label={`${provider.name} active`}
-      onCheckedChange={(active) =>
-        setStatus.mutate(
-          { id: provider.id, status: active ? 'ACTIVE' : 'INACTIVE' },
-          {
-            onSuccess: () =>
-              toast.success(
-                active
-                  ? `${provider.name} is now shown to customers.`
-                  : `${provider.name} is now hidden from customers.`,
-              ),
-            onError: (error) => toast.error(getApiErrorMessage(error, 'Could not change status.')),
-          },
-        )
-      }
-    />
-  )
-}
-
 export default function CourierProvidersPage() {
   const { can } = useStaffAuth()
   const { data: providers = [], isLoading, isError } = useAdminCourierProviders()
@@ -76,7 +32,7 @@ export default function CourierProvidersPage() {
   const canCreate = can('courier_provider.create')
   const canEdit = can('courier_provider.update')
   const canToggle = can('courier_provider.update_status')
-  const columns = canEdit ? 6 : 5
+  const columns = canEdit ? 5 : 4
 
   const openCreate = () => {
     setEditing(null)
@@ -87,7 +43,7 @@ export default function CourierProvidersPage() {
     <div className="space-y-6">
       <PageHeader
         title="Courier providers"
-        description="Carriers customers can book with. Inactive providers are hidden from customers."
+        description="Carriers customers can book with. Open a provider to manage its margin slabs."
         actions={
           canCreate && (
             <Button onClick={openCreate}>
@@ -102,7 +58,6 @@ export default function CourierProvidersPage() {
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead>Provider</TableHead>
-              <TableHead className="text-right">Service charge</TableHead>
               <TableHead className="hidden sm:table-cell">GST</TableHead>
               <TableHead className="hidden md:table-cell">Added</TableHead>
               <TableHead>Status</TableHead>
@@ -151,11 +106,13 @@ export default function CourierProvidersPage() {
                     <TableCell>
                       <div className={cn('flex items-center gap-3', !active && 'opacity-60')}>
                         <ProviderLogo provider={p} />
-                        <span className="font-medium text-foreground">{p.name}</span>
+                        <Link
+                          to={`/admin/courier-providers/${p.id}`}
+                          className="font-medium text-foreground hover:text-primary hover:underline"
+                        >
+                          {p.name}
+                        </Link>
                       </div>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatINR(Number(p.serviceCharge))}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {p.isGstApplicable ? (
@@ -170,7 +127,7 @@ export default function CourierProvidersPage() {
                     <TableCell>
                       {canToggle ? (
                         <div className="flex items-center gap-2">
-                          <StatusSwitch provider={p} />
+                          <ProviderStatusSwitch provider={p} />
                           <span className="hidden text-xs text-muted-foreground lg:inline">
                             {active ? 'Active' : 'Inactive'}
                           </span>

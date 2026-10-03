@@ -4,6 +4,8 @@ import type {
   BookingList,
   BookingStatus,
   CreateBookingInput,
+  DocumentLink,
+  DocumentType,
   PartiesInput,
   UpdateBookingInput,
 } from '@/lib/types'
@@ -45,4 +47,11 @@ export function submitBooking(id: string) {
 
 export function cancelBooking(id: string) {
   return apiClient.post<Booking>(`/bookings/${id}/cancel`)
+}
+
+/** `download` makes the link save the file instead of opening it. */
+export function getBookingDocument(id: string, type: DocumentType, download = false) {
+  return apiClient.get<DocumentLink>(
+    `/bookings/${id}/documents/${type}${download ? '?download=true' : ''}`,
+  )
 }

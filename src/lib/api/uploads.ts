@@ -1,7 +1,8 @@
 import { apiClient } from '@/lib/api/client'
 import type { KycDownloadUrl, KycUploadUrl } from '@/lib/types'
 
-export const KYC_ACCEPT = 'image/png,image/jpeg,image/webp,application/pdf'
+// The backend takes only these, so every file can go into the KYC PDF.
+export const KYC_ACCEPT = '.jpg,.jpeg,.png,.pdf'
 export const KYC_MAX_BYTES = 10 * 1024 * 1024
 
 export function requestKycUploadUrl(fileName: string, contentType?: string) {

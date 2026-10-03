@@ -89,7 +89,6 @@ export interface CourierProvider {
   id: string
   name: string
   logoUrl: string | null
-  serviceCharge: number
   isGstApplicable: boolean
   status: string
   createdAt: string
@@ -461,4 +460,28 @@ export interface PaymentDetails {
   gstNumber: string | null
   /** Active accounts only; may be empty. */
   bankAccounts: PaymentBankAccount[]
+}
+
+// ---------------------------------------------------------------------------
+// Booking documents (BOOKED bookings only)
+// ---------------------------------------------------------------------------
+
+export const DOCUMENT_TYPES = [
+  'airway-bill',
+  'proforma-invoice',
+  'non-dg-invoice',
+  'box-invoice',
+  'kyc',
+  'all',
+] as const
+export type DocumentType = (typeof DOCUMENT_TYPES)[number]
+
+/** Signed link to a freshly generated PDF; expires, so never cache it. */
+export interface DocumentLink {
+  fileName: string
+  url: string
+  /** Seconds. */
+  expiresIn: number
+  /** Bytes. */
+  size: number
 }

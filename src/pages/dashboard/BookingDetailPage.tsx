@@ -26,6 +26,8 @@ import {
 } from '@/components/ui/dialog'
 import { StatusBadge } from '@/components/StatusBadge'
 import { BookingRecap } from '@/components/booking/BookingRecap'
+import { BookingDocumentsCard } from '@/components/booking/BookingDocumentsCard'
+import { getBookingDocument } from '@/lib/api/bookings'
 import { formatDateTime } from '@/lib/format'
 
 export default function BookingDetailPage() {
@@ -154,6 +156,12 @@ export default function BookingDetailPage() {
 
       {isDraft && (
         <WalletFundsCheck price={price} wallet={wallet.data} loading={wallet.isLoading} />
+      )}
+
+      {booking.status === 'BOOKED' && (
+        <BookingDocumentsCard
+          fetchLink={(type, download) => getBookingDocument(booking.id, type, download)}
+        />
       )}
 
       <BookingRecap booking={booking} />
